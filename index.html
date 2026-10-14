@@ -115,6 +115,17 @@ td:first-child,th:first-child{text-align:left}
     <div class="small" style="margin-top:8px">XAUUSD: 0.01 lot = $1 per $1 move. Risk 5% se zyada ho to lot kam karein.</div>
   </div>
 
+  <div class="card">
+    <h2>Notifications</h2>
+    <button id="pushBtn" type="button">&#128276; Notifications ON karein</button>
+    <div class="small" id="pushState" style="margin-top:8px">BUY / SELL aate hi phone par message, app band ho tab bhi.</div>
+    <div id="pushCodeBox" style="display:none;margin-top:10px">
+      <div class="small">Ye code GitHub (mt5-data &rarr; Settings &rarr; Secrets &rarr; Actions) mein <b>PUSH_SUB</b> naam se dalen:</div>
+      <textarea id="pushCode" readonly rows="4" style="width:100%;margin-top:6px;font:12px monospace;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"></textarea>
+      <button id="pushCopy" type="button" style="margin-top:6px">Copy code</button>
+    </div>
+  </div>
+
   <div class="small">
     Data: MT5 MarketExport (har 5 min update). Page har 60 second baad khud refresh hota hai.
     Mobile par "Add to Home screen" se app ki tarah khol sakte hain.
@@ -396,6 +407,61 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) load
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+
+/* ---------------- Push notifications ---------------- */
+const VAPID_PUBLIC = "BC7qbMjPryrFnzdvaegWkTUZ0i9HJeF8sZG5gut2vJz0YF8jV5uw-NAPRJSZSqFsQmMrGNQHrAwITgzsonbjLPk";
+
+function b64ToBytes(b64) {
+  const pad = "=".repeat((4 - b64.length % 4) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+function showPushCode(sub) {
+  $("pushCode").value = JSON.stringify(sub);
+  $("pushCodeBox").style.display = "block";
+  $("pushBtn").innerHTML = "&#128276; Notifications ON hain (test dobara)";
+}
+async function enablePush() {
+  const st = $("pushState");
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    st.textContent = "Is browser mein notifications support nahi. Chrome mein kholein."; return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") {
+      st.textContent = "Notifications block hain. Chrome: link ke saath wala icon > Permissions > Notifications > Allow."; return;
+    }
+    const reg = await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
+    showPushCode(sub);
+    await reg.showNotification("Gold Signal ✅", {
+      body: "Phone par notifications ON. Ab neeche wala code copy karke GitHub mein dalen.",
+      icon: "icon-192.png", badge: "badge-96.png", tag: "gold-signal-local"
+    });
+    st.textContent = "ON. Code copy karke GitHub mein PUSH_SUB secret mein dalen (sirf pehli dafa).";
+  } catch (e) {
+    st.textContent = "Error: " + (e && e.message ? e.message : e);
+  }
+}
+$("pushBtn").addEventListener("click", enablePush);
+$("pushCopy").addEventListener("click", async () => {
+  const t = $("pushCode");
+  try { await navigator.clipboard.writeText(t.value); }
+  catch (e) { t.select(); document.execCommand("copy"); }
+  $("pushCopy").textContent = "Copied ✓";
+  setTimeout(() => { $("pushCopy").textContent = "Copy code"; }, 2000);
+});
+(async () => {
+  try {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (Notification.permission !== "granted") return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && await reg.pushManager.getSubscription();
+    if (sub) { showPushCode(sub); $("pushState").textContent = "ON hain."; }
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
