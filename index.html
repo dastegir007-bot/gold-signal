@@ -6,6 +6,10 @@
 <meta name="theme-color" content="#14161a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gold Signal">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Gold Signal</title>
 <style>
 :root{
@@ -386,6 +390,12 @@ $("refresh").addEventListener("click", load);
 loadPrefs();
 load();
 setInterval(load, 60000);
+// App dobara kholne par foran naya data
+document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+// Install support (home-screen app)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
 </script>
 </body>
 </html>
