@@ -83,7 +83,7 @@ h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.3px}
 .b{font-weight:700} .red{color:var(--sell);font-weight:800} .grn{color:var(--buy);font-weight:800}
 .inrow{display:flex;gap:8px;align-items:flex-end}
 .inrow label{flex-grow:1;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
-input[type=number]{font:inherit;font-size:16px;color:var(--ink);padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--field);height:44px;width:100%}
+#amt{font:inherit;font-size:16px;color:var(--ink);padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--field);height:44px;width:100%}
 input:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
 .tog{height:44px;border-radius:10px;border:1px solid var(--sel);background:var(--card);font-weight:700;font-size:13px;padding:0 12px;white-space:nowrap}
 .tog[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
@@ -889,38 +889,57 @@ function renderSignal(S, r) {
   renderTrade(S, r, tr);
 }
 
+// tables that depend on the amount (updated while typing, the input box itself is never redrawn)
+function calcParts(S, tr, amt) {
+  var dp = S.dp;
+  var sc = STS.spotScenarios(tr.steps, tr.sl, tr.tp1, amt);
+  var labels = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit lage"] :
+    tr.active ? ["Sirf Entry 1", "Entry 1 + 2", "Teeno lage"] : ["Sirf limit 1", "Limit 1 + 2", "Teeno lage"];
+  var names = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit"] : tr.active ? ["Entry 1", "DCA 2", "DCA 3"] : ["Limit 1", "Limit 2", "Limit 3"];
+  var steps = tr.steps.map(function (s, i) {
+    var usd = amt * s.w;
+    return '<span class="b">' + names[i] + " <small>" + Math.round(s.w * 100) + '%</small></span><span class="b">' +
+      fmt(s.p, dp) + "</span><span>$" + fmt(usd, 2) + "</span><span>" + fmt(s.p > 0 ? usd / s.p : 0, S.qd) + "</span>";
+  }).join("");
+  var scen = sc.map(function (x, i) {
+    return "<span>" + labels[i] + "</span><span>" + fmt(x.avg, dp) + '</span><span class="red">−$' + fmt(x.sl, 2) + '</span><span class="grn">+$' + fmt(x.tp, 2) + "</span>";
+  }).join("");
+  var minPart = amt * Math.min.apply(null, tr.steps.map(function (s) { return s.w; }));
+  var tables = '<div class="tbl t4"><span class="h">Step</span><span class="h">Price</span><span class="h">USDT</span><span class="h">Coin</span>' + steps +
+    '<span class="red">SL</span><span class="red">' + fmt(tr.sl, dp) + '</span><span class="nt">sab par</span><span class="nt">ek hi SL</span></div>' +
+    (amt > 0 && minPart < 5 ? '<span class="small" style="color:var(--sell)">Binance har order kam se kam ~5 USDT ka leta hai. Raqam barhayen' + (UI.dca ? " (DCA ON par kam se kam 20)." : ".") + "</span>" : "") +
+    '<h3>Agar SL ya TP1 lage (fees samet)</h3><div class="tbl t4b"><span class="h">Kitne lage</span><span class="h">Avg price</span><span class="h">SL par</span><span class="h">TP1 par</span>' + scen + "</div>" +
+    '<span class="small">' + (UI.dca ? "Raqam 40% / 30% / 30% mein bati. SL DCA 3 ke neeche, sab par ek. " : "DCA band: poori raqam ek entry par. ") + "Binance fee 0.1% + 0.1% shamil.</span>";
+  var qtyAll = sc.length ? sc[sc.length - 1].qty : 0;
+  var orders = tr.steps.map(function (s, i) {
+    var k = tr.active && i === 0 ? "Buy (market) abhi" : "Buy limit (" + names[i] + ")";
+    return '<div class="row"><span>' + k + "</span><b>$" + fmt(amt * s.w, 2) + " @ " + fmt(s.p, dp) + "</b></div>";
+  }).join("") +
+    '<div class="row"><span>OCO sell: take profit</span><b>' + fmt(tr.tp1, dp) + "</b></div>" +
+    '<div class="row"><span>OCO sell: stop / limit</span><b>' + fmt(tr.sl, dp) + " / " + fmt(tr.sl * 0.999, dp) + "</b></div>" +
+    '<div class="row"><span>OCO quantity (sab lagne par)</span><b>' + fmt(qtyAll, S.qd) + " " + S.sym + "</b></div>";
+  return { tables: tables, orders: orders };
+}
+
+function cleanAmt(v) {
+  v = String(v || "").replace(/,/g, ".").replace(/[^0-9.]/g, "");
+  var i = v.indexOf(".");
+  if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/\./g, "");
+  return v.slice(0, 10);
+}
+
 function renderTrade(S, r, tr) {
   var dp = S.dp, html = "", extra = "";
+  // keep typing position if the box is being edited while the app refreshes
+  var act = document.activeElement, typing = act && act.id === "amt", pos = typing ? act.selectionStart : null;
   if (tr) {
     var amt = parseFloat(UI.amt); if (!(amt > 0)) amt = 0;
-    var sc = STS.spotScenarios(tr.steps, tr.sl, tr.tp1, amt);
-    var labels = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit lage"] :
-      tr.active ? ["Sirf Entry 1", "Entry 1 + 2", "Teeno lage"] : ["Sirf limit 1", "Limit 1 + 2", "Teeno lage"];
-    var names = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit"] : tr.active ? ["Entry 1", "DCA 2", "DCA 3"] : ["Limit 1", "Limit 2", "Limit 3"];
-    var steps = tr.steps.map(function (s, i) {
-      var usd = amt * s.w;
-      return '<span class="b">' + names[i] + " <small>" + Math.round(s.w * 100) + '%</small></span><span class="b">' +
-        fmt(s.p, dp) + "</span><span>$" + fmt(usd, 2) + "</span><span>" + fmt(s.p > 0 ? usd / s.p : 0, S.qd) + "</span>";
-    }).join("");
-    var scen = sc.map(function (x, i) {
-      return "<span>" + labels[i] + "</span><span>" + fmt(x.avg, dp) + '</span><span class="red">−$' + fmt(x.sl, 2) + '</span><span class="grn">+$' + fmt(x.tp, 2) + "</span>";
-    }).join("");
+    var parts = calcParts(S, tr, amt);
     html = '<section class="card"><h2>' + (tr.active ? "Entry, DCA aur USDT" : "Plan: limit, DCA aur USDT") + '</h2>' +
-      '<div class="inrow"><label for="amt">Kul amount (USDT)<input id="amt" type="number" inputmode="decimal" min="0" step="1" value="' + esc(UI.amt) + '"></label>' +
+      '<div class="inrow"><label for="amt">Kul amount (USDT)<input id="amt" type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" value="' + esc(UI.amt) + '"></label>' +
       '<button class="tog" id="dcaBtn" type="button" aria-pressed="' + UI.dca + '">' + (UI.dca ? "DCA ON" : "DCA OFF") + "</button></div>" +
-      '<div class="tbl t4"><span class="h">Step</span><span class="h">Price</span><span class="h">USDT</span><span class="h">Coin</span>' + steps +
-      '<span class="red">SL</span><span class="red">' + fmt(tr.sl, dp) + '</span><span class="nt">sab par</span><span class="nt">ek hi SL</span></div>' +
-      '<h3>Agar SL ya TP1 lage (fees samet)</h3><div class="tbl t4b"><span class="h">Kitne lage</span><span class="h">Avg price</span><span class="h">SL par</span><span class="h">TP1 par</span>' + scen + "</div>" +
-      '<span class="small">' + (UI.dca ? "Raqam 40% / 30% / 30% mein bati. SL DCA 3 ke neeche, sab par ek. " : "DCA band: poori raqam ek entry par. ") + "Binance fee 0.1% + 0.1% shamil.</span></section>";
-    var qtyAll = sc.length ? sc[sc.length - 1].qty : 0;
-    var orders = tr.steps.map(function (s, i) {
-      var k = tr.active && i === 0 ? "Buy (market) abhi" : "Buy limit (" + names[i] + ")";
-      return '<div class="row"><span>' + k + "</span><b>$" + fmt(amt * s.w, 2) + " @ " + fmt(s.p, dp) + "</b></div>";
-    }).join("");
-    extra += '<section class="card"><h2>Binance par orders</h2>' + orders +
-      '<div class="row"><span>OCO sell: take profit</span><b>' + fmt(tr.tp1, dp) + "</b></div>" +
-      '<div class="row"><span>OCO sell: stop / limit</span><b>' + fmt(tr.sl, dp) + " / " + fmt(tr.sl * 0.999, dp) + "</b></div>" +
-      '<div class="row"><span>OCO quantity (sab lagne par)</span><b>' + fmt(qtyAll, S.qd) + " " + S.sym + "</b></div>" +
+      '<div id="calc">' + parts.tables + "</div></section>";
+    extra += '<section class="card"><h2>Binance par orders</h2><div id="orders">' + parts.orders + "</div>" +
       '<span class="small">Har DCA fill ke baad OCO ki quantity barha dein. Notification yaad dilayegi.</span></section>';
     extra += '<section class="info"><b>DCA ke qaide</b><ul>' +
       "<li>DCA ka matlab: wahi raqam hisson mein lagana. Nayi raqam nahi jorni.</li>" +
@@ -952,11 +971,21 @@ function renderTrade(S, r, tr) {
   $("trade").innerHTML = html;
   $("extra").innerHTML = extra;
   var amtEl = $("amt");
-  if (amtEl) amtEl.addEventListener("input", function () {
-    UI.amt = amtEl.value; lsSet("ax_amt", UI.amt);
-    var pos = amtEl.selectionStart;
-    renderTrade(SYMS[UI.tab], cur(), spotTrade(SYMS[UI.tab], cur()));
-    var n = $("amt"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {}
+  if (!amtEl) return;
+  if (typing) { amtEl.focus(); try { amtEl.setSelectionRange(pos, pos); } catch (e) {} }
+  amtEl.addEventListener("input", function () {
+    var raw = amtEl.value, v = cleanAmt(raw);
+    if (v !== raw) {
+      var p = Math.max(0, (amtEl.selectionStart || v.length) - (raw.length - v.length));
+      amtEl.value = v;
+      try { amtEl.setSelectionRange(p, p); } catch (e) {}
+    }
+    UI.amt = v; lsSet("ax_amt", v);
+    var t = spotTrade(SYMS[UI.tab], cur());
+    if (!t) return;
+    var parts = calcParts(SYMS[UI.tab], t, parseFloat(v) > 0 ? parseFloat(v) : 0);
+    $("calc").innerHTML = parts.tables;
+    $("orders").innerHTML = parts.orders;
   });
 }
 
