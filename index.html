@@ -279,15 +279,19 @@ var STS = (function () {
 
   function goldBars(exp) {
     var out = {};
+    // export time: the last row is the forming candle, unless its time is already over
+    // (upload made right after a candle close, before the first tick of the next candle)
+    var at = serverToMs(exp.info.gmt_time || exp.info.server_time);
     ["M15", "H1", "H4", "D1"].forEach(function (tf) {
       var rows = exp.tf[tf];
       if (!rows || !rows.length) return;
       out[tf] = rows.map(function (r, i) {
+        var t = serverToMs(r.time);
         return {
-          t: serverToMs(r.time), o: r.open, h: r.high, l: r.low, c: r.close,
+          t: t, o: r.open, h: r.high, l: r.low, c: r.close,
           ema20: r.ema_fast, ema50: r.ema_slow, rsi: r.rsi, atr: r.atr,
           adx: r.adx, pdi: r.plus_di, mdi: r.minus_di, sar: r.sar,
-          closed: i < rows.length - 1          // last row = forming candle
+          closed: i < rows.length - 1 || (isFinite(at) && isFinite(t) && t + TFINFO[tf].ms <= at)
         };
       });
     });
