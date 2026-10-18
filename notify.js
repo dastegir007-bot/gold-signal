@@ -158,17 +158,19 @@ function readSubs(raw) {
 
 async function send(msgs) {
   const isTest = process.env.FORCE_TEST === "1";
-  if (!msgs.length && !isTest) return;
+  if (!msgs.length && !isTest) return null;
   if (!process.env.VAPID_PRIVATE || !process.env.PUSH_SUB) {
     console.log("DRY RUN (secrets missing). Messages:");
     msgs.forEach(m => console.log(" -", m.sym, m.tf, "|", m.title, "|", m.body.replace(/\n/g, " / ")));
-    return;
+    return { at: NOW, dry: true, n: msgs.length };
   }
   const webpush = require("web-push");
   webpush.setVapidDetails(process.env.VAPID_SUBJECT || "https://dastegir007-bot.github.io/gold-signal/",
     process.env.VAPID_PUBLIC, process.env.VAPID_PRIVATE.trim());
-  let ok = 0, tried = 0;
+  let ok = 0, tried = 0, subs = 0;
+  const fails = [];
   for (const sub of readSubs(process.env.PUSH_SUB)) {
+    subs++;
     const prefs = sub.prefs || DEFAULT_PREFS;
     let list = msgs.filter(m => prefs.s.indexOf(m.sym) >= 0 && prefs.t.indexOf(m.tf) >= 0);
     if (isTest) list = [{ sym: "test", tf: "", title: "AURX AI: test ✅", body: "Notifications kaam kar rahi hain.\nSymbols: " + prefs.s.join(", ") + " · TF: " + prefs.t.join(", ") }].concat(list);
@@ -185,6 +187,7 @@ async function send(msgs) {
         ok++;
       } catch (e) {
         console.log("Push failed:", e.statusCode, e.body || e.message);
+        fails.push(e.statusCode || String(e.message || "error").slice(0, 40));
         if (e.statusCode === 404 || e.statusCode === 410)
           console.log("Phone ka code expire ho gaya: app mein Notifications ON dobara dabayen aur naya code PUSH_SUB mein dalen.");
       }
@@ -192,6 +195,7 @@ async function send(msgs) {
   }
   console.log("Sent", ok, "of", tried, "notification(s)");
   if (tried && !ok) process.exitCode = 1;
+  return { at: NOW, subs, tried, ok, fails: fails.slice(0, 5), test: isTest };
 }
 
 (async () => {
@@ -225,17 +229,20 @@ async function send(msgs) {
   const open = state.trades.filter(t => t.status === "open"), done = state.trades.filter(t => t.status !== "open");
   state.trades = done.slice(-400).concat(open);
 
+  const pushRes = await send(msgs);
+
   const snapOld = !state.snap || NOW - state.snap.at >= SNAP_EVERY;
-  const dirty = sigChanged || tradesChanged || eventsChanged || msgs.length > 0;
+  const dirty = sigChanged || tradesChanged || eventsChanged || msgs.length > 0 || process.env.FORCE_TEST === "1";
   if (dirty || snapOld) {
     const rows = {};
     STS.ORDER.forEach(s => { rows[s] = STS.tfRows(ctx, s); });
     state.snap = { at: NOW, res, rows, price: ctx.price, change: ctx.change };
     state.updated = NOW; state.host = spot.host; state.errors = spot.errors.slice(0, 10);
+    // health check of this run: calendar reachable, push result (kept for the record, no secrets)
+    state.check = { at: NOW, cal: cal.ok, calEvents: cal.list.length, gold: !!goldText,
+      push: pushRes || (state.check && state.check.push) || null };
     fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
     fs.writeFileSync(STATE_FILE, JSON.stringify(state));
     console.log("State saved (" + (dirty ? "changes" : "snapshot") + "), trades:", state.trades.length, "open:", open.length);
   } else console.log("No changes");
-
-  await send(msgs);
 })().catch(e => { console.error(e); process.exitCode = 1; });
