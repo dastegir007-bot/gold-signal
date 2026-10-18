@@ -27,11 +27,18 @@ if (process.env.MOCK_FETCH) fetchImpl = require(path.resolve(process.env.MOCK_FE
 
 function readJson(file, dflt) { try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { return dflt; } }
 
+let calInfo = null;
 async function loadEvents(old) {
   try {
     const r = await fetchImpl(CAL_URL, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j = await r.json();
+    // small summary of the feed for the health check (helps when no events are found)
+    const usd = (Array.isArray(j) ? j : []).filter(x => String(x.country).toUpperCase() === "USD");
+    const imp = {};
+    usd.forEach(x => { imp[x.impact] = (imp[x.impact] || 0) + 1; });
+    calInfo = { all: Array.isArray(j) ? j.length : -1, usd: usd.length, impact: imp,
+      first: Array.isArray(j) && j.length ? j[0].date : null, last: Array.isArray(j) && j.length ? j[j.length - 1].date : null };
     const ev = j.filter(x => x.country === "USD" && x.impact === "High")
       .map(x => ({ t: Date.parse(x.date), title: String(x.title || "").slice(0, 60) }))
       .filter(x => isFinite(x.t));
@@ -239,7 +246,7 @@ async function send(msgs) {
     state.snap = { at: NOW, res, rows, price: ctx.price, change: ctx.change };
     state.updated = NOW; state.host = spot.host; state.errors = spot.errors.slice(0, 10);
     // health check of this run: calendar reachable, push result (kept for the record, no secrets)
-    state.check = { at: NOW, cal: cal.ok, calEvents: cal.list.length, gold: !!goldText,
+    state.check = { at: NOW, cal: cal.ok, calEvents: cal.list.length, calInfo, gold: !!goldText,
       push: pushRes || (state.check && state.check.push) || null };
     fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
     fs.writeFileSync(STATE_FILE, JSON.stringify(state));
