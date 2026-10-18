@@ -70,6 +70,15 @@ h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.3px}
 .chip svg{flex-shrink:0}
 .row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--dash);font-size:14px}
 .row:last-child{border-bottom:0}
+.srl{display:flex;flex-direction:column}
+.srr{display:grid;grid-template-columns:34px 1fr auto;gap:2px 8px;align-items:baseline;padding:7px 0;border-top:1px solid var(--dash)}
+.srr:first-child{border-top:0}
+.srr .k{font-weight:800;font-size:13px}
+.srr .v{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.srr .d{font-size:13px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.srr .s{grid-column:2 / 4;font-size:12px;color:var(--muted)}
+.srr.now{background:var(--field);border-radius:10px;padding:8px;border-top:0;margin:4px 0}
+.srr.now + .srr{border-top:0}
 .row b{text-align:right}
 .tbl{display:grid;font-size:13px}
 .tbl span{padding:7px 4px;border-top:1px solid var(--dash)}
@@ -129,6 +138,7 @@ textarea{width:100%;font:12px monospace;padding:8px;border-radius:8px;border:1px
   <div class="pricehead" id="pricehead"></div>
   <section class="signal" id="signal"></section>
   <div id="chip"></div>
+  <section class="card" id="srCard"><h2 id="srTitle">Support aur Resistance</h2><div class="srl" id="sr"></div><div class="small" id="srNote"></div></section>
   <div id="trade"></div>
   <div id="extra"></div>
   <section class="card"><h2 id="chkTitle">Signal checklist</h2><div class="checks" id="checks"></div></section>
@@ -503,6 +513,53 @@ var STS = (function () {
     }
     return out.filter(function (x) { return isFinite(x.p); });
   }
+  // support / resistance map for the chosen timeframe. Nearby levels are merged into zones
+  // (max 0.6 ATR wide); listed zones are at least 0.75 ATR apart so the list is not crowded;
+  // n = how many levels sit in the zone (more = stronger)
+  function srMap(ctx, sym, tf) {
+    var e = lastClosed((ctx.bars[sym] || {})[tf]), P = ctx.price[sym];
+    if (!e || !(e.atr > 0) || !isFinite(P)) return null;
+    var A = e.atr, zones = [];
+    var lv = srLevels(ctx, sym, tf).filter(function (x) { return !(tf === "W1" && x.label.indexOf("kal ka") === 0); });
+    if (tf === "W1") swings((ctx.bars[sym] || {}).W1, 2, 150).forEach(function (s) { lv.push({ p: s.p, label: "W1 swing " + (s.kind === "hi" ? "high" : "low") }); });
+    var seen = {};
+    lv = lv.filter(function (x) { var k = x.label + "|" + x.p; if (seen[k]) return false; seen[k] = 1; return true; });
+    lv.sort(function (a, b) { return a.p - b.p; }).forEach(function (x) {
+      var z = zones[zones.length - 1];
+      if (z && x.p - z.hi <= 0.35 * A && x.p - z.lo <= 0.6 * A) {
+        z.hi = x.p; z.n++; z.sum += x.p;
+        if (z.labels.indexOf(x.label) < 0) z.labels.push(x.label);
+      } else zones.push({ lo: x.p, hi: x.p, n: 1, sum: x.p, labels: [x.label] });
+    });
+    var pack = function (z) {
+      var p = z.sum / z.n;
+      return { p: p, lo: z.lo, hi: z.hi, n: z.n + (z.extra || 0), label: z.labels.slice(0, 2).join(" + ") + (z.labels.length > 2 ? " +" + (z.labels.length - 2) + " aur" : ""),
+        pct: (p - P) / P * 100 };
+    };
+    var up = [], dn = [], inside = null, near = 0.25 * A, gap = 0.75 * A;
+    zones.forEach(function (z) {
+      if (z.lo - near > P) up.push(z);
+      else if (z.hi + near < P) dn.push(z);
+      else if (!inside || z.n > inside.n) inside = z;
+    });
+    up.sort(function (a, b) { return a.lo - b.lo; });
+    dn.sort(function (a, b) { return b.hi - a.hi; });
+    // walk away from price; a zone too close to the last one listed adds its strength to it instead
+    var pick = function (list, dir) {
+      var out = [];
+      list.forEach(function (z) {
+        var last = out[out.length - 1];
+        if (last && (dir > 0 ? z.lo - last.hi : last.lo - z.hi) < gap) {
+          last.extra = (last.extra || 0) + z.n;
+          z.labels.forEach(function (l) { if (last.labels.indexOf(l) < 0) last.labels.push(l); });
+          return;
+        }
+        if (out.length < 3) out.push(z);
+      });
+      return out;
+    };
+    return { price: P, atr: A, res: pick(up, 1).map(pack), sup: pick(dn, -1).map(pack), inside: inside ? pack(inside) : null };
+  }
   function nearestLevel(levels, price, dir, gap, atr) {
     // dir +1 = above price, -1 = below price; levels closer than 0.2 ATR are named together
     var c = levels.filter(function (x) { return dir > 0 ? x.p > price + gap : x.p < price - gap; });
@@ -566,6 +623,7 @@ var STS = (function () {
       return res;
     }
     res.atr = e.atr; res.barT = e.t; res.barEnd = e.t + I.ms;
+    res.sr = srMap(ctx, sym, tf);
     var ok = true;
 
     if (!S.spot) {
@@ -702,7 +760,7 @@ var STS = (function () {
     fmt: fmt, pktTime: pktTime, serverToMs: serverToMs, parseExport: parseExport, goldBars: goldBars,
     addIndicators: addIndicators, klinesToBars: klinesToBars, loadSpot: loadSpot, buildCtx: buildCtx,
     lastClosed: lastClosed, lastClosedIdx: lastClosedIdx, trendDir: trendDir, trendLabel: trendLabel,
-    evaluate: evaluate, evaluateAll: evaluateAll, tfRows: tfRows, spotSteps: spotSteps, spotScenarios: spotScenarios,
+    evaluate: evaluate, srMap: srMap, evaluateAll: evaluateAll, tfRows: tfRows, spotSteps: spotSteps, spotScenarios: spotScenarios,
     goldWeekend: goldWeekend
   };
 })();
@@ -826,6 +884,7 @@ function render() {
     esc(S.venue) + "</span>" + (isFinite(ch) ? '<span class="' + (ch >= 0 ? "up" : "dn") + '" style="font-size:13px">' + (ch >= 0 ? "+" : "") + fmt(ch, 2) + "% (24h)</span>" : "") + "</div>";
 
   renderSignal(S, r);
+  renderSR(S, r);
   renderChecks(r);
   renderTf();
   renderPositions(S);
@@ -987,6 +1046,31 @@ function renderTrade(S, r, tr) {
     $("calc").innerHTML = parts.tables;
     $("orders").innerHTML = parts.orders;
   });
+}
+
+function renderSR(S, r) {
+  var M = r && !r.noData ? r.sr : null, dp = S.dp;
+  $("srTitle").textContent = "Support aur Resistance (" + UI.tf + ")";
+  if (!M) { $("sr").innerHTML = '<div class="nt">Data nahi</div>'; $("srNote").textContent = ""; return; }
+  var strength = function (n) { return n >= 3 ? "mazboot (" + n + " level)" : n === 2 ? "darmiyani (2 level)" : ""; };
+  var row = function (k, cls, z) {
+    var zone = z.hi - z.lo > Math.pow(10, -dp) ? "zone " + fmt(z.lo, dp) + " – " + fmt(z.hi, dp) : "";
+    var info = [zone, z.label, strength(z.n)].filter(function (x) { return x; }).join(" · ");
+    return '<div class="srr"><span class="k ' + cls + '">' + k + '</span><span class="v">' + fmt(z.p, dp) + '</span><span class="d ' + cls + '">' +
+      (z.pct >= 0 ? "+" : "") + fmt(z.pct, 2) + '%</span><span class="s">' + esc(info) + "</span></div>";
+  };
+  var html = "";
+  for (var i = M.res.length - 1; i >= 0; i--) html += row("R" + (i + 1), "dn", M.res[i]);
+  if (!M.res.length) html += '<div class="srr"><span class="k nt">R</span><span class="s" style="grid-column:2 / 4">Upar koi qareebi resistance nahi</span></div>';
+  html += '<div class="srr now"><span class="k">Abhi</span><span class="v">' + fmt(M.price, dp) + '</span><span class="d nt">' +
+    (M.inside ? "zone mein" : "") + "</span>" + (M.inside ? '<span class="s">Price is level ke paas hai: ' + esc((M.inside.hi - M.inside.lo > Math.pow(10, -dp) ? fmt(M.inside.lo, dp) + " – " + fmt(M.inside.hi, dp) : fmt(M.inside.p, dp)) + " · " + M.inside.label) + "</span>" : "") + "</div>";
+  for (var j = 0; j < M.sup.length; j++) html += row("S" + (j + 1), "up", M.sup[j]);
+  if (!M.sup.length) html += '<div class="srr"><span class="k nt">S</span><span class="s" style="grid-column:2 / 4">Neeche koi qareebi support nahi</span></div>';
+  $("sr").innerHTML = html;
+  var I = TFINFO[UI.tf];
+  $("srNote").textContent = "Levels: " + UI.tf + " ki pichli 100 candles ke swing high/low" + (I.trend !== UI.tf ? ", " + I.trend + " ke swings" : "") +
+    (UI.tab === "gold" && (UI.tf === "M15" || UI.tf === "H1" || UI.tf === "H4") ? ", aaj/kal/hafte ke high-low aur pivots." : UI.tf === "W1" ? " aur pichle hafte ka high-low." : ", kal aur pichle hafte ke high-low.") +
+    " Paas paas ke levels ek zone ban jate hain; jitne zyada level, utna mazboot. Toot jaye to role badal sakta hai (resistance → support).";
 }
 
 function renderChecks(r) {
