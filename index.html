@@ -6,462 +6,1096 @@
 <meta name="theme-color" content="#14161a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Gold Signal">
+<meta name="apple-mobile-web-app-title" content="AURX AI">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Gold Signal</title>
+<title>AURX AI</title>
 <style>
 :root{
-  --bg:#f4f5f7; --card:#ffffff; --ink:#15171c; --muted:#6b7280; --line:#e3e6ea;
-  --buy:#0f8a4a; --buy-bg:#e5f6ec; --sell:#c62828; --sell-bg:#fdeaea;
-  --wait:#8a6d00; --wait-bg:#fff6d6; --accent:#2557d6;
+  --bg:#f4f5f7; --card:#ffffff; --ink:#15171c; --muted:#5f6672; --soft:#3f4650; --line:#d9dde3; --dash:#e3e6ea;
+  --buy:#0b6e3a; --buy-b:#0f8a4a; --buy-bg:#e5f6ec;
+  --sell:#a51f1f; --sell-b:#c62828; --sell-bg:#fdeaea;
+  --wait:#6b5400; --wait-b:#c99a06; --wait-bg:#fff6d6;
+  --acc:#2557d6; --acc-bg:#eef3ff; --acc-b:#c9d6f7; --acc-ink:#1d3a8a;
+  --sel:#15171c; --sel-ink:#ffffff; --field:#f4f5f7;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0f1115; --card:#181b21; --ink:#eef0f3; --muted:#9aa3ae; --line:#2a2f37;
-    --buy:#34c77b; --buy-bg:#12301f; --sell:#ff6b6b; --sell-bg:#3a1717;
-    --wait:#f2c94c; --wait-bg:#33290a; --accent:#7aa2ff;
+    --bg:#0f1115; --card:#181b21; --ink:#eef0f3; --muted:#a3abb6; --soft:#c3c9d2; --line:#2e333c; --dash:#2a2f37;
+    --buy:#4fd18b; --buy-b:#34c77b; --buy-bg:#12301f;
+    --sell:#ff7b7b; --sell-b:#ff6b6b; --sell-bg:#3a1717;
+    --wait:#f2c94c; --wait-b:#c99a06; --wait-bg:#33290a;
+    --acc:#7aa2ff; --acc-bg:#16213d; --acc-b:#2c3f73; --acc-ink:#c9d8ff;
+    --sel:#eef0f3; --sel-ink:#15171c; --field:#0f1115;
   }
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);
-  font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:560px;margin:0 auto;padding:12px 16px 40px}
-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:4px 0 12px}
-h1{font-size:18px;margin:0}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:560px;margin:0 auto;padding:12px 16px 40px;display:flex;flex-direction:column;gap:12px}
+button{font:inherit;color:inherit;cursor:pointer}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.3px}
 .sub{color:var(--muted);font-size:12px}
-button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);
-  border-radius:10px;padding:8px 12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.signal{text-align:center;padding:18px 14px}
-.signal .big{font-size:34px;font-weight:800;letter-spacing:1px}
-.signal.buy{background:var(--buy-bg);border-color:var(--buy)} .signal.buy .big{color:var(--buy)}
-.signal.sell{background:var(--sell-bg);border-color:var(--sell)} .signal.sell .big{color:var(--sell)}
-.signal.wait{background:var(--wait-bg);border-color:var(--wait)} .signal.wait .big{color:var(--wait)}
-.signal .why{margin-top:6px;font-size:14px}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.box{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;background:var(--card)}
-.box .k{font-size:11px;color:var(--muted)} .box .v{font-size:16px;font-weight:700}
-h2{font-size:14px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-ul.check{list-style:none;margin:0;padding:0}
-ul.check li{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:14px}
-ul.check li:last-child{border-bottom:0}
-.ok{color:var(--buy);font-weight:700} .no{color:var(--sell);font-weight:700}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
-th{color:var(--muted);font-weight:600}
-td:first-child,th:first-child{text-align:left}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0}
+.tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.tab{height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px;padding:0}
+.tab[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
+.dot{width:7px;height:7px;border-radius:4px;flex-shrink:0;background:var(--wait-b)}
+.dot.BUY{background:var(--buy-b)} .dot.SELL,.dot.EXIT{background:var(--sell-b)} .dot.NONE{background:var(--line)}
+.tfs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.tfb{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:700;font-size:14px;padding:0}
+.tfb[aria-pressed="true"]{background:var(--acc);color:#fff;border-color:var(--acc)}
+.hold{font-size:12px;color:var(--soft)}
+.pricehead{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.pricehead .big{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--card)}
 .up{color:var(--buy);font-weight:700} .dn{color:var(--sell);font-weight:700} .nt{color:var(--muted)}
-.row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.signal{border-radius:16px;padding:16px 14px;display:flex;flex-direction:column;gap:12px;border:2px solid var(--wait-b);background:var(--wait-bg)}
+.signal.BUY{border-color:var(--buy-b);background:var(--buy-bg)} .signal.SELL,.signal.EXIT{border-color:var(--sell-b);background:var(--sell-bg)}
+.signal .head{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.signal .tag{font-size:12px;font-weight:700;letter-spacing:.5px}
+.signal .side{font-size:38px;font-weight:900;letter-spacing:2px}
+.signal .tag,.signal .side{color:var(--wait)} .signal.BUY .tag,.signal.BUY .side{color:var(--buy)}
+.signal.SELL .tag,.signal.SELL .side,.signal.EXIT .tag,.signal.EXIT .side{color:var(--sell)}
+.signal .why{font-size:14px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column}
+.box .k{font-size:11px;color:var(--muted)} .box .v{font-size:17px;font-weight:800} .box .s{font-size:12px;color:var(--muted)}
+.rr{font-size:12px;text-align:center;color:var(--soft)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.card h2{margin:0;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.card h3{margin:4px 0 0;font-size:13px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;font-style:italic}
+.chip svg{flex-shrink:0}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--dash);font-size:14px}
 .row:last-child{border-bottom:0}
-.inputs{display:flex;gap:10px;flex-wrap:wrap}
-.inputs label{flex:1;min-width:120px;font-size:12px;color:var(--muted)}
-.inputs input{width:100%;margin-top:4px;font:inherit;padding:8px;border-radius:8px;
-  border:1px solid var(--line);background:var(--bg);color:var(--ink)}
-.warn{background:var(--wait-bg);border:1px solid var(--wait);border-radius:10px;padding:10px;font-size:13px;margin-bottom:12px}
-.err{background:var(--sell-bg);border:1px solid var(--sell);border-radius:10px;padding:10px;font-size:13px;margin-bottom:12px}
+.row b{text-align:right}
+.tbl{display:grid;font-size:13px}
+.tbl span{padding:7px 4px;border-top:1px solid var(--dash)}
+.tbl span.h{border-top:0;padding:4px;color:var(--muted);font-weight:600}
+.tbl span small{font-size:12px;color:var(--muted);font-weight:400}
+.t4{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,1fr)}
+.t4b{grid-template-columns:minmax(0,1.4fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,.8fr)}
+.t4e{grid-template-columns:repeat(4,minmax(0,1fr))}
+.t5{grid-template-columns:minmax(0,.9fr) minmax(0,.7fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,.9fr)}
+.tbl span.sel{background:var(--acc-bg)}
+.b{font-weight:700} .red{color:var(--sell);font-weight:800} .grn{color:var(--buy);font-weight:800}
+.inrow{display:flex;gap:8px;align-items:flex-end}
+.inrow label{flex-grow:1;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+input[type=number]{font:inherit;font-size:16px;color:var(--ink);padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--field);height:44px;width:100%}
+input:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.tog{height:44px;border-radius:10px;border:1px solid var(--sel);background:var(--card);font-weight:700;font-size:13px;padding:0 12px;white-space:nowrap}
+.tog[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
 .small{font-size:12px;color:var(--muted)}
+.checks div{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--dash);font-size:14px}
+.checks div:last-child{border-bottom:0}
+.checks .m{width:16px;flex-shrink:0;font-weight:800}
+.info{background:var(--acc-bg);border:1px solid var(--acc-b);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--acc-ink);display:flex;flex-direction:column;gap:6px}
+.info ul{margin:0;padding-left:18px}
+.warn{background:var(--wait-bg);border:1px solid var(--wait-b);border-radius:12px;padding:10px 12px;font-size:13px}
+.err{background:var(--sell-bg);border:1px solid var(--sell-b);border-radius:12px;padding:10px 12px;font-size:13px}
+.ntrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ntb{min-width:68px;height:44px;border-radius:22px;border:1px solid var(--sel);background:var(--card);font-weight:700;font-size:13px;padding:0 14px}
+.ntb[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
+.ntf{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ntf button{height:44px;border-radius:10px;border:1px solid var(--sel);background:var(--card);font-weight:700;font-size:13px;padding:0}
+.ntf button[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink)}
+.linkbtn{border:0;background:none;padding:4px 0;color:var(--acc);font-size:13px;text-align:left}
+.mainbtn{height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:700;padding:0 14px}
+textarea{width:100%;font:12px monospace;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--field);color:var(--ink)}
+.hidden{display:none !important}
 </style>
 </head>
 <body>
 <main>
   <header>
     <div>
-      <h1>Gold Signal (XAUUSD)</h1>
-      <div class="sub" id="stamp">Loading...</div>
+      <h1>AURX AI</h1>
+      <div class="sub" id="stamp">Data aa raha hai...</div>
     </div>
-    <button id="refresh" type="button">Refresh</button>
+    <button class="iconbtn" id="refresh" type="button" aria-label="Refresh">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><polyline points="21 3 21 9 15 9"></polyline></svg>
+    </button>
   </header>
 
   <div id="msg"></div>
-
-  <div class="card signal wait" id="sigCard">
-    <div class="big" id="sigBig">WAIT</div>
-    <div class="why" id="sigWhy">Data aa raha hai...</div>
-    <div class="grid3" id="sigLevels"></div>
-    <div class="small" id="sigRisk" style="margin-top:10px"></div>
+  <nav class="tabs" id="tabs" aria-label="Symbols"></nav>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <span class="small">Timeframe chunein (entry, SL aur TP isi hisaab se)</span>
+    <div class="tfs" id="tfs"></div>
+    <span class="hold" id="hold"></span>
   </div>
+  <div class="pricehead" id="pricehead"></div>
+  <section class="signal" id="signal"></section>
+  <div id="chip"></div>
+  <div id="trade"></div>
+  <div id="extra"></div>
+  <section class="card"><h2 id="chkTitle">Signal checklist</h2><div class="checks" id="checks"></div></section>
+  <section class="card"><h2>Timeframes (M15 se W1 tak)</h2><div class="tbl t4e" id="tfTable"></div><div class="small" id="tfNote"></div></section>
+  <div id="positions"></div>
+  <section class="card"><h2>Signal ka record</h2><div id="record"></div></section>
+
+  <section class="card">
+    <h2>Notifications</h2>
+    <div id="nsym" style="display:flex;flex-direction:column;gap:6px"></div>
+    <span class="b" style="font-size:13px;margin-top:6px">Kin timeframes ke signal bhejein</span>
+    <div class="ntf" id="ntf"></div>
+    <span class="small">Har coin aur timeframe par ek candle mein ek message. DCA, TP aur SL lagne par bhi message.</span>
+    <button class="mainbtn" id="pushBtn" type="button">Notifications ON karein</button>
+    <div class="small" id="pushState">App band ho tab bhi phone par message aayega.</div>
+    <div class="warn hidden" id="prefsWarn">Settings badli hain. Neeche se naya code copy karke GitHub (mt5-data &rarr; Settings &rarr; Secrets &rarr; Actions) mein <b>PUSH_SUB</b> update karein.</div>
+    <button class="linkbtn hidden" id="pushShow" type="button">PUSH_SUB code dikhayen</button>
+    <div id="pushCodeBox" class="hidden" style="display:flex;flex-direction:column;gap:6px">
+      <div class="small">Ye code GitHub (mt5-data &rarr; Settings &rarr; Secrets &rarr; Actions) mein <b>PUSH_SUB</b> naam se dalen:</div>
+      <textarea id="pushCode" readonly rows="4"></textarea>
+      <button class="mainbtn" id="pushCopy" type="button">Copy code</button>
+    </div>
+  </section>
 
   <div class="warn">
-    Yeh signal sirf qaidon (rules) par mabni hai, guarantee nahi. Har trade par SL zaroor lagayen.
-    <b>NFP / CPI / FOMC</b> wale din, aur news se 1 ghanta pehle aur baad, signal na lein.
+    Signal sirf qaidon (rules) par mabni hai, guarantee nahi. Har trade par <b>SL lazmi</b>. Bari US news (CPI, FOMC, NFP) se 60 min pehle aur baad naya signal nahi aata.
   </div>
-
-  <div class="card">
-    <h2>Signal checklist</h2>
-    <ul class="check" id="checks"></ul>
-  </div>
-
-  <div class="card">
-    <h2>Timeframes (last closed candle)</h2>
-    <table>
-      <thead><tr><th>TF</th><th>Trend</th><th>RSI</th><th>ADX</th><th>+DI/-DI</th><th>SAR</th></tr></thead>
-      <tbody id="tfTable"></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <h2>Levels</h2>
-    <div id="levels"></div>
-  </div>
-
-  <div class="card">
-    <h2>My account</h2>
-    <div class="inputs">
-      <label>Balance ($)<input id="inBal" type="number" inputmode="decimal" step="0.01" value="55"></label>
-      <label>Lot<input id="inLot" type="number" inputmode="decimal" step="0.01" value="0.01"></label>
-    </div>
-    <div class="small" style="margin-top:8px">XAUUSD: 0.01 lot = $1 per $1 move. Risk 5% se zyada ho to lot kam karein.</div>
-  </div>
-
-  <div class="card">
-    <h2>Notifications</h2>
-    <button id="pushBtn" type="button">&#128276; Notifications ON karein</button>
-    <div class="small" id="pushState" style="margin-top:8px">BUY / SELL aate hi phone par message, app band ho tab bhi.</div>
-    <div id="pushCodeBox" style="display:none;margin-top:10px">
-      <div class="small">Ye code GitHub (mt5-data &rarr; Settings &rarr; Secrets &rarr; Actions) mein <b>PUSH_SUB</b> naam se dalen:</div>
-      <textarea id="pushCode" readonly rows="4" style="width:100%;margin-top:6px;font:12px monospace;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"></textarea>
-      <button id="pushCopy" type="button" style="margin-top:6px">Copy code</button>
-    </div>
-  </div>
-
-  <div class="small">
-    Data: MT5 MarketExport (har 5 min update). Page har 60 second baad khud refresh hota hai.
-    Mobile par "Add to Home screen" se app ki tarah khol sakte hain.
-  </div>
+  <div class="small">Gold: MT5 (Exness) ka data. PAXG, BTC, ETH, SOL, BNB: Binance spot. Page har 60 second baad khud refresh hota hai.</div>
 </main>
 
 <script>
 /*LOGIC_START*/
-const CFG = {
-  dataUrl: "https://raw.githubusercontent.com/dastegir007-bot/mt5-data/main/xauusd_live.txt",
-  maxSpread: 0.50,          // price
-  staleMinutes: 15,         // data older than this = market closed / EA stopped
-  blockServerFrom: 20,      // no signals from this server hour ...
-  blockServerTo: 1,         // ... until this server hour (rollover + thin Asian open)
-  touchAtr: 0.25,           // pullback must reach EMA20 within this x ATR
-  slBufferAtr: 0.30,        // SL buffer beyond swing, x ATR(M15)
-  slMinAtr: 0.8, slMaxAtr: 2.5,
-  tp1R: 1.5, tp2R: 2.5,
-  sellRsi: [35, 60], buyRsi: [40, 65],
-  minAdxH1: 20
-};
+// STS signal engine. Shared by the app (browser) and notify.js (GitHub Actions).
+// Pure logic + data loading only: no page / DOM code in this block.
+var STS = (function () {
+  "use strict";
 
-function parseExport(text) {
-  const out = { info: {}, levels: {}, tf: {} };
-  let sec = null, header = null;
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    const m = line.match(/^\[([A-Z0-9_]+)\]/);
-    if (m) { sec = m[1]; header = null; continue; }
-    const parts = line.split(",");
-    if (sec === "INFO" || sec === "LEVELS") {
-      const key = parts[0], val = parts.slice(1).join(",");
-      const num = Number(val);
-      out[sec === "INFO" ? "info" : "levels"][key] = (val !== "" && !isNaN(num)) ? num : val;
-      continue;
-    }
-    if (/^(M5|M15|H1|H4|D1)$/.test(sec || "")) {
-      if (line === "NOT_READY") continue;
-      if (!header) {
-        header = parts.map(h => h.replace(/^ema\d+$/, x => (x === parts[7] ? "ema_fast" : "ema_slow")));
-        out.tf[sec] = [];
-        continue;
+  var CFG = {
+    goldUrl: "https://raw.githubusercontent.com/dastegir007-bot/mt5-data/main/xauusd_live.txt",
+    stateUrl: "https://raw.githubusercontent.com/dastegir007-bot/mt5-data/main/sts/state.json",
+    hosts: ["https://data-api.binance.vision", "https://api.binance.com", "https://api1.binance.com"],
+    klineLimit: 300,
+    maxSpread: 0.50,          // gold spread limit (price)
+    staleMinutes: 15,         // gold data older than this = market closed / EA stopped
+    goldBlockFrom: 20,        // gold M15/H1: no signals from this UTC hour ...
+    goldBlockTo: 1,           // ... until this UTC hour (rollover + thin market)
+    touchAtr: 0.25,           // pullback must reach EMA20 within this x ATR
+    slBufferAtr: 0.30,        // SL buffer beyond the 5-candle swing, x ATR
+    slMinAtr: 0.8, slMaxAtr: 2.5,
+    tp1R: 1.5, tp2R: 2.5,
+    sellRsi: [35, 60], buyRsi: [40, 65],
+    minAdx: 20,
+    spotMinTpPct: 0.8,        // spot: TP1 must be at least this % away (fees 0.2%)
+    fee: 0.001,               // Binance spot fee per side
+    dcaW: [0.4, 0.3, 0.3],    // DCA split
+    dcaStepAtr: 1.0,          // DCA levels: 1 and 2 ATR below entry 1
+    dcaSlAtr: 2.8,            // DCA stop loss: 2.8 ATR below entry 1
+    exitBars: 3,              // spot EXIT shown for this many candles after the cross
+    newsMin: 60,              // no new signal this many minutes before / after big US news
+    maxOpenSpot: 2            // max open spot BUY signals at one time
+  };
+
+  var TFS = ["M15", "H1", "H4", "D1", "W1"];
+  var TFINFO = {
+    M15: { bin: "15m", ms: 9e5,     trend: "H1", filter: "H4", hold: "kuch ghante",  valid: "15 min",   expiry: 32 },
+    H1:  { bin: "1h",  ms: 36e5,    trend: "H4", filter: "D1", hold: "1 – 3 din",    valid: "1 ghanta", expiry: 48 },
+    H4:  { bin: "4h",  ms: 144e5,   trend: "D1", filter: "W1", hold: "3 – 10 din",   valid: "4 ghante", expiry: 40 },
+    D1:  { bin: "1d",  ms: 864e5,   trend: "W1", filter: null, hold: "2 – 6 hafte",  valid: "1 din",    expiry: 40 },
+    W1:  { bin: "1w",  ms: 6048e5,  trend: "W1", filter: null, hold: "2 – 6 mahine", valid: "1 hafta",  expiry: 26 }
+  };
+  var SYMS = {
+    gold: { label: "Gold", name: "Gold",                  pair: "XAUUSD",    venue: "Exness · MT5",   spot: false, dp: 2 },
+    paxg: { label: "PAXG", name: "Pax Gold (gold token)", pair: "PAXG/USDT", venue: "Binance · Spot", spot: true, dp: 2, qd: 4, bin: "PAXGUSDT", sym: "PAXG", goldHours: true },
+    btc:  { label: "BTC",  name: "Bitcoin",               pair: "BTC/USDT",  venue: "Binance · Spot", spot: true, dp: 2, qd: 6, bin: "BTCUSDT",  sym: "BTC" },
+    eth:  { label: "ETH",  name: "Ethereum",              pair: "ETH/USDT",  venue: "Binance · Spot", spot: true, dp: 2, qd: 4, bin: "ETHUSDT",  sym: "ETH", btcFilter: true },
+    sol:  { label: "SOL",  name: "Solana",                pair: "SOL/USDT",  venue: "Binance · Spot", spot: true, dp: 2, qd: 3, bin: "SOLUSDT",  sym: "SOL", btcFilter: true },
+    bnb:  { label: "BNB",  name: "BNB",                   pair: "BNB/USDT",  venue: "Binance · Spot", spot: true, dp: 2, qd: 3, bin: "BNBUSDT",  sym: "BNB", btcFilter: true }
+  };
+  var ORDER = ["gold", "paxg", "btc", "eth", "sol", "bnb"];
+  var SPOT = ["paxg", "btc", "eth", "sol", "bnb"];
+
+  // ---------------- helpers ----------------
+  function fmt(v, d) {
+    if (v === null || v === undefined || !isFinite(v)) return "-";
+    return Number(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function serverToMs(s) {
+    var m = String(s).match(/(\d{4})\.(\d{2})\.(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!m) return NaN;
+    return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  }
+  function pktTime(ms, withDate) {
+    if (!isFinite(ms)) return "-";
+    var d = new Date(ms + 5 * 3600000), iso = d.toISOString();
+    if (!withDate) return iso.slice(11, 16);
+    var mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getUTCMonth()];
+    return d.getUTCDate() + " " + mon + " " + iso.slice(11, 16);
+  }
+  function lastClosedIdx(bars) {
+    if (!bars) return -1;
+    for (var i = bars.length - 1; i >= 0; i--) if (bars[i].closed) return i;
+    return -1;
+  }
+  function lastClosed(bars) { var i = lastClosedIdx(bars); return i >= 0 ? bars[i] : null; }
+
+  // ---------------- MT5 export (gold) ----------------
+  function parseExport(text) {
+    var out = { info: {}, levels: {}, tf: {} };
+    var sec = null, header = null;
+    String(text).split(/\r?\n/).forEach(function (raw) {
+      var line = raw.trim();
+      if (!line || line.charAt(0) === "#") return;
+      var m = line.match(/^\[([A-Z0-9_]+)\]/);
+      if (m) { sec = m[1]; header = null; return; }
+      var parts = line.split(",");
+      if (sec === "INFO" || sec === "LEVELS") {
+        var key = parts[0], val = parts.slice(1).join(","), n = Number(val);
+        out[sec === "INFO" ? "info" : "levels"][key] = (val !== "" && !isNaN(n)) ? n : val;
+        return;
       }
-      const row = {};
-      header.forEach((h, i) => {
-        const v = parts[i];
-        row[h] = (h === "time") ? v : (v === "" || v === undefined ? NaN : Number(v));
+      if (/^(M5|M15|H1|H4|D1)$/.test(sec || "")) {
+        if (line === "NOT_READY") return;
+        if (!header) {
+          header = parts.map(function (h) { return /^ema\d+$/.test(h) ? (h === parts[7] ? "ema_fast" : "ema_slow") : h; });
+          out.tf[sec] = [];
+          return;
+        }
+        var row = {};
+        header.forEach(function (h, i) {
+          var v = parts[i];
+          row[h] = (h === "time") ? v : (v === "" || v === undefined ? NaN : Number(v));
+        });
+        out.tf[sec].push(row);
+      }
+    });
+    return out;
+  }
+
+  function goldBars(exp) {
+    var out = {};
+    ["M15", "H1", "H4", "D1"].forEach(function (tf) {
+      var rows = exp.tf[tf];
+      if (!rows || !rows.length) return;
+      out[tf] = rows.map(function (r, i) {
+        return {
+          t: serverToMs(r.time), o: r.open, h: r.high, l: r.low, c: r.close,
+          ema20: r.ema_fast, ema50: r.ema_slow, rsi: r.rsi, atr: r.atr,
+          adx: r.adx, pdi: r.plus_di, mdi: r.minus_di, sar: r.sar,
+          closed: i < rows.length - 1          // last row = forming candle
+        };
       });
-      out.tf[sec].push(row);
+    });
+    return out;
+  }
+
+  // ---------------- indicators (same formulas as MT5) ----------------
+  function addIndicators(b) {
+    var n = b.length, i;
+    if (!n) return b;
+    // EMA 20 / 50
+    [[20, "ema20"], [50, "ema50"]].forEach(function (p) {
+      var a = 2 / (p[0] + 1), prev = b[0].c;
+      for (i = 0; i < n; i++) { prev = i === 0 ? b[0].c : b[i].c * a + prev * (1 - a); b[i][p[1]] = prev; }
+    });
+    // RSI 14 (first value = simple average, then Wilder smoothing)
+    var P = 14, pos = 0, neg = 0;
+    b[0].rsi = NaN;
+    for (i = 1; i < n; i++) {
+      var d = b[i].c - b[i - 1].c, up = d > 0 ? d : 0, dn = d < 0 ? -d : 0;
+      if (i < P) { pos += up; neg += dn; b[i].rsi = NaN; continue; }
+      if (i === P) { pos = (pos + up) / P; neg = (neg + dn) / P; }
+      else { pos = (pos * (P - 1) + up) / P; neg = (neg * (P - 1) + dn) / P; }
+      b[i].rsi = neg === 0 ? (pos === 0 ? 50 : 100) : 100 - 100 / (1 + pos / neg);
     }
-  }
-  return out;
-}
-
-// "2026.10.13 23:56:20" (UTC/server) -> Date
-function serverToDate(s) {
-  const m = String(s).match(/(\d{4})\.(\d{2})\.(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?/);
-  if (!m) return null;
-  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)));
-}
-
-function lastClosed(rows) { return rows && rows.length >= 2 ? rows[rows.length - 2] : null; }
-
-function tfTrend(r) {
-  if (!r) return 0;
-  if (r.ema_fast < r.ema_slow && r.close < r.ema_fast && r.minus_di > r.plus_di) return -1;
-  if (r.ema_fast > r.ema_slow && r.close > r.ema_fast && r.plus_di > r.minus_di) return 1;
-  return 0;
-}
-
-function computeSignal(d, nowMs) {
-  const res = { side: "WAIT", reason: "", checks: [], levels: null };
-  const add = (ok, text) => { res.checks.push({ ok, text }); return ok; };
-
-  const h1 = lastClosed(d.tf.H1), h4 = lastClosed(d.tf.H4), m15 = lastClosed(d.tf.M15);
-  if (!h1 || !h4 || !m15) { res.reason = "Data adhoora hai"; return res; }
-
-  const gmt = serverToDate(d.info.gmt_time || d.info.server_time);
-  const ageMin = gmt ? (nowMs - gmt.getTime()) / 60000 : 999;
-  const lastTick = serverToDate(d.info.last_tick_time);
-  const tickAge = lastTick && gmt ? (gmt.getTime() - lastTick.getTime()) / 60000 : 0;
-  const fresh = add(ageMin <= CFG.staleMinutes && tickAge <= 10,
-    ageMin <= CFG.staleMinutes ? (tickAge <= 10 ? "Data taaza hai" : "Market band (naye ticks nahi)")
-                               : "Data purana hai (" + Math.round(ageMin) + " min) - market band ya EA ruka hua");
-
-  const srv = serverToDate(d.info.server_time);
-  const hr = srv ? srv.getUTCHours() : 12;
-  const blocked = (CFG.blockServerFrom > CFG.blockServerTo)
-    ? (hr >= CFG.blockServerFrom || hr < CFG.blockServerTo)
-    : (hr >= CFG.blockServerFrom && hr < CFG.blockServerTo);
-  const timeOk = add(!blocked, blocked ? "Waqt theek nahi (din ka close / patli market)" : "Waqt theek hai");
-
-  const spread = Number(d.info.spread);
-  const spreadOk = add(spread <= CFG.maxSpread, "Spread " + spread.toFixed(2) + (spread <= CFG.maxSpread ? " theek" : " zyada hai"));
-
-  const t1 = tfTrend(h1);
-  const trendTxt = t1 < 0 ? "H1 trend NEECHE (EMA20 < EMA50, -DI > +DI)"
-                 : t1 > 0 ? "H1 trend OOPAR (EMA20 > EMA50, +DI > -DI)" : "H1 trend saaf nahi";
-  const trendOk = add(t1 !== 0, trendTxt);
-  const adxOk = add(h1.adx >= CFG.minAdxH1, "H1 ADX " + h1.adx.toFixed(1) + (h1.adx >= CFG.minAdxH1 ? " (trend mein jaan hai)" : " (kamzor trend)"));
-
-  // H4 must not oppose
-  const h4Opp = t1 < 0 ? (h4.close > h4.ema_fast && h4.plus_di > h4.minus_di + 5)
-              : t1 > 0 ? (h4.close < h4.ema_fast && h4.minus_di > h4.plus_di + 5) : false;
-  const h4Ok = add(!h4Opp, h4Opp ? "H4 ulti taraf ja raha hai" : "H4 rukawat nahi");
-
-  let trigOk = false, rsiOk = false;
-  const atr = m15.atr;
-  if (t1 < 0) {
-    const touched = m15.high >= m15.ema_fast - CFG.touchAtr * atr;
-    trigOk = add(touched && m15.close < m15.ema_fast && m15.close < m15.open && m15.sar > m15.close,
-      "M15: EMA20 tak wapsi + laal candle neeche band" + (touched ? "" : " (abhi EMA20 tak wapsi nahi)"));
-    rsiOk = add(m15.rsi >= CFG.sellRsi[0] && m15.rsi <= CFG.sellRsi[1],
-      "M15 RSI " + m15.rsi.toFixed(1) + " (sell ke liye " + CFG.sellRsi[0] + "-" + CFG.sellRsi[1] + ")");
-  } else if (t1 > 0) {
-    const touched = m15.low <= m15.ema_fast + CFG.touchAtr * atr;
-    trigOk = add(touched && m15.close > m15.ema_fast && m15.close > m15.open && m15.sar < m15.close,
-      "M15: EMA20 tak wapsi + hara candle oopar band" + (touched ? "" : " (abhi EMA20 tak wapsi nahi)"));
-    rsiOk = add(m15.rsi >= CFG.buyRsi[0] && m15.rsi <= CFG.buyRsi[1],
-      "M15 RSI " + m15.rsi.toFixed(1) + " (buy ke liye " + CFG.buyRsi[0] + "-" + CFG.buyRsi[1] + ")");
-  } else {
-    add(false, "M15 entry: pehle H1 trend chahiye");
+    // ATR 14 (simple average of true range)
+    var tr = [];
+    for (i = 0; i < n; i++) {
+      tr[i] = i === 0 ? b[0].h - b[0].l
+        : Math.max(b[i].h, b[i - 1].c) - Math.min(b[i].l, b[i - 1].c);
+      if (i >= P) {
+        var s = 0;
+        for (var k = i - P + 1; k <= i; k++) s += tr[k];
+        b[i].atr = s / P;
+      } else b[i].atr = NaN;
+    }
+    // ADX 14 with +DI / -DI (MT5 iADX: exponential smoothing)
+    var pr = 2 / (P + 1), pdi = 0, mdi = 0, adx = 0;
+    b[0].pdi = 0; b[0].mdi = 0; b[0].adx = 0;
+    for (i = 1; i < n; i++) {
+      var hp = b[i].h - b[i - 1].h, ln = b[i - 1].l - b[i].l;
+      if (hp < 0) hp = 0;
+      if (ln < 0) ln = 0;
+      if (hp > ln) ln = 0;
+      else if (hp < ln) hp = 0;
+      else { hp = 0; ln = 0; }
+      var t = Math.max(Math.abs(b[i].h - b[i].l), Math.abs(b[i].h - b[i - 1].c), Math.abs(b[i].l - b[i - 1].c));
+      var p1 = t !== 0 ? 100 * hp / t : 0, n1 = t !== 0 ? 100 * ln / t : 0;
+      pdi = p1 * pr + pdi * (1 - pr);
+      mdi = n1 * pr + mdi * (1 - pr);
+      var sum = pdi + mdi, dx = sum !== 0 ? 100 * Math.abs(pdi - mdi) / sum : 0;
+      adx = dx * pr + adx * (1 - pr);
+      b[i].pdi = pdi; b[i].mdi = mdi; b[i].adx = adx;
+    }
+    // Parabolic SAR 0.02 / 0.2
+    if (n > 1) {
+      var upT = b[1].c >= b[0].c, af = 0.02, ep = upT ? b[0].h : b[0].l, sar = upT ? b[0].l : b[0].h;
+      b[0].sar = NaN;
+      for (i = 1; i < n; i++) {
+        sar = sar + af * (ep - sar);
+        if (upT) {
+          sar = Math.min(sar, b[i - 1].l, i > 1 ? b[i - 2].l : b[i - 1].l);
+          if (b[i].l < sar) { upT = false; sar = ep; ep = b[i].l; af = 0.02; }
+          else if (b[i].h > ep) { ep = b[i].h; af = Math.min(af + 0.02, 0.2); }
+        } else {
+          sar = Math.max(sar, b[i - 1].h, i > 1 ? b[i - 2].h : b[i - 1].h);
+          if (b[i].h > sar) { upT = true; sar = ep; ep = b[i].h; af = 0.02; }
+          else if (b[i].l < ep) { ep = b[i].l; af = Math.min(af + 0.02, 0.2); }
+        }
+        b[i].sar = sar;
+      }
+    }
+    return b;
   }
 
-  // levels (also shown as a plan while waiting)
-  let lv = null;
-  if (t1 !== 0) {
-    const rows = d.tf.M15, n = rows.length;
-    const swing = rows.slice(Math.max(0, n - 6), n - 1);   // last 5 closed bars
-    const bid = Number(d.info.bid), ask = Number(d.info.ask);
-    if (t1 < 0) {
-      const hi = Math.max(...swing.map(r => r.high));
-      let entry = bid, sl = hi + CFG.slBufferAtr * atr;
-      let dist = sl - entry;
-      if (dist < CFG.slMinAtr * atr) { dist = CFG.slMinAtr * atr; sl = entry + dist; }
-      lv = { entry, sl, tp1: entry - CFG.tp1R * dist, tp2: entry - CFG.tp2R * dist, dist };
+  // Binance kline arrays -> bars with indicators
+  function klinesToBars(k, now) {
+    var b = k.map(function (x) {
+      return { t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5], ct: +x[6], closed: +x[6] < now };
+    });
+    return addIndicators(b);
+  }
+
+  // gold W1 is built from PAXG weekly candles, moved by the gold - PAXG price gap
+  function shiftBars(bars, off) {
+    return bars.map(function (r) {
+      return {
+        t: r.t, o: r.o + off, h: r.h + off, l: r.l + off, c: r.c + off, ct: r.ct, closed: r.closed,
+        ema20: r.ema20 + off, ema50: r.ema50 + off, sar: r.sar + off,
+        rsi: r.rsi, atr: r.atr, adx: r.adx, pdi: r.pdi, mdi: r.mdi
+      };
+    });
+  }
+
+  // ---------------- data loading ----------------
+  function binanceKlines(symbol, interval, fetchImpl, hostFirst) {
+    var hosts = CFG.hosts.slice();
+    if (hostFirst) hosts = [hostFirst].concat(hosts.filter(function (h) { return h !== hostFirst; }));
+    var i = 0, lastErr = null;
+    function next() {
+      if (i >= hosts.length) return Promise.reject(lastErr || new Error("Binance nahi mila"));
+      var host = hosts[i++];
+      var url = host + "/api/v3/klines?symbol=" + symbol + "&interval=" + interval + "&limit=" + CFG.klineLimit;
+      return fetchImpl(url, { cache: "no-store" })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+        .then(function (j) { if (!Array.isArray(j) || !j.length) throw new Error("khali data"); return { host: host, data: j }; })
+        .catch(function (e) { lastErr = e; return next(); });
+    }
+    return next();
+  }
+
+  // all spot symbols x all timeframes -> { bars: {sym: {tf: bars}}, host, errors }
+  function loadSpot(fetchImpl, now) {
+    var out = { bars: {}, host: null, errors: [] };
+    // first call finds a working host, the rest use it first
+    return binanceKlines("BTCUSDT", "1h", fetchImpl, null).then(function (first) {
+      out.host = first.host;
+      out.bars.btc = { H1: klinesToBars(first.data, now) };
+      var jobs = [];
+      SPOT.forEach(function (s) {
+        if (!out.bars[s]) out.bars[s] = {};
+        TFS.forEach(function (tf) {
+          if (s === "btc" && tf === "H1") return;
+          jobs.push(binanceKlines(SYMS[s].bin, TFINFO[tf].bin, fetchImpl, out.host)
+            .then(function (r) { out.bars[s][tf] = klinesToBars(r.data, now); })
+            .catch(function (e) { out.errors.push(s + " " + tf + ": " + (e && e.message || e)); }));
+        });
+      });
+      return Promise.all(jobs).then(function () { return out; });
+    }, function (e) {
+      out.errors.push("Binance: " + (e && e.message || e));
+      return out;
+    });
+  }
+
+  // ---------------- context ----------------
+  function buildCtx(o) {
+    var ctx = { now: o.now, bars: {}, price: {}, change: {}, exp: null, events: o.events || null, trades: o.trades || [], notes: {} };
+    if (o.goldText) {
+      ctx.exp = parseExport(o.goldText);
+      ctx.bars.gold = goldBars(ctx.exp);
+      var info = ctx.exp.info, L = ctx.exp.levels;
+      ctx.price.gold = Number(info.bid);
+      if (L.prev_day_close) ctx.change.gold = (ctx.price.gold - L.prev_day_close) / L.prev_day_close * 100;
+    }
+    var sb = (o.spot && o.spot.bars) || {};
+    SPOT.forEach(function (s) {
+      var B = sb[s];
+      if (!B) return;
+      ctx.bars[s] = B;
+      var live = B.M15 || B.H1;
+      if (live && live.length) ctx.price[s] = live[live.length - 1].c;
+      var h1 = B.H1;
+      if (h1 && h1.length > 25) {
+        var ref = null;
+        for (var i = h1.length - 1; i >= 0; i--) if (h1[i].t <= o.now - 864e5) { ref = h1[i]; break; }
+        if (ref) ctx.change[s] = (ctx.price[s] - ref.c) / ref.c * 100;
+      }
+    });
+    if (ctx.bars.gold && sb.paxg && sb.paxg.W1 && isFinite(ctx.price.gold) && isFinite(ctx.price.paxg)) {
+      ctx.bars.gold.W1 = shiftBars(sb.paxg.W1, ctx.price.gold - ctx.price.paxg);
+      ctx.notes.goldW1 = "Gold ka W1 PAXG (Binance) ke weekly data se bana hai";
+    }
+    return ctx;
+  }
+
+  // ---------------- rules ----------------
+  function trendDir(r) {
+    if (!r) return 0;
+    if (r.ema20 > r.ema50 && r.c > r.ema20 && r.pdi > r.mdi) return 1;
+    if (r.ema20 < r.ema50 && r.c < r.ema20 && r.mdi > r.pdi) return -1;
+    return 0;
+  }
+  function trendLabel(r) {
+    if (!r || !isFinite(r.ema50)) return "Data nahi";
+    var d = trendDir(r);
+    if (d === 0) return "Range";
+    return (d > 0 ? "Up" : "Down") + (r.adx < CFG.minAdx ? " (kamzor)" : "");
+  }
+  function goldWeekend(now) {
+    var d = new Date(now), day = d.getUTCDay(), h = d.getUTCHours();
+    return day === 6 || (day === 0 && h < 22) || (day === 5 && h >= 21);
+  }
+  function nearEvent(events, now) {
+    if (!events) return null;
+    for (var i = 0; i < events.length; i++) {
+      if (Math.abs(events[i].t - now) <= CFG.newsMin * 60000) return events[i];
+    }
+    return null;
+  }
+  function swings(bars, n, count) {
+    var out = [], end = lastClosedIdx(bars);
+    if (end < 0) return out;
+    var start = Math.max(n, end - count);
+    for (var i = start; i <= end - n; i++) {
+      var hi = true, lo = true;
+      for (var k = i - n; k <= i + n; k++) {
+        if (k === i) continue;
+        if (bars[k].h > bars[i].h) hi = false;
+        if (bars[k].l < bars[i].l) lo = false;
+      }
+      if (hi) out.push({ p: bars[i].h, kind: "hi" });
+      if (lo) out.push({ p: bars[i].l, kind: "lo" });
+    }
+    return out;
+  }
+  // support / resistance levels with a short label
+  function srLevels(ctx, sym, tf) {
+    var B = ctx.bars[sym] || {}, I = TFINFO[tf], out = [];
+    swings(B[tf], 3, 100).forEach(function (s) { out.push({ p: s.p, label: tf + " swing " + (s.kind === "hi" ? "high" : "low") }); });
+    if (I.trend !== tf) swings(B[I.trend], 2, 100).forEach(function (s) { out.push({ p: s.p, label: I.trend + " swing " + (s.kind === "hi" ? "high" : "low") }); });
+    if (sym === "gold" && ctx.exp && (tf === "M15" || tf === "H1" || tf === "H4")) {
+      var L = ctx.exp.levels;
+      [["today_high", "aaj ka high"], ["today_low", "aaj ka low"], ["prev_day_high", "kal ka high"], ["prev_day_low", "kal ka low"],
+       ["week_high", "hafte ka high"], ["week_low", "hafte ka low"], ["pivot_R1", "pivot R1"], ["pivot_R2", "pivot R2"],
+       ["pivot_S1", "pivot S1"], ["pivot_S2", "pivot S2"]].forEach(function (x) {
+        if (isFinite(L[x[0]])) out.push({ p: L[x[0]], label: x[1] });
+      });
     } else {
-      const lo = Math.min(...swing.map(r => r.low));
-      let entry = ask, sl = lo - CFG.slBufferAtr * atr;
-      let dist = entry - sl;
-      if (dist < CFG.slMinAtr * atr) { dist = CFG.slMinAtr * atr; sl = entry - dist; }
-      lv = { entry, sl, tp1: entry + CFG.tp1R * dist, tp2: entry + CFG.tp2R * dist, dist };
+      var d1 = B.D1, w1 = B.W1, i;
+      if (d1) { i = lastClosedIdx(d1); if (i >= 0) { out.push({ p: d1[i].h, label: "kal ka high" }); out.push({ p: d1[i].l, label: "kal ka low" }); } }
+      if (w1) { i = lastClosedIdx(w1); if (i >= 0) { out.push({ p: w1[i].h, label: "pichle hafte ka high" }); out.push({ p: w1[i].l, label: "pichle hafte ka low" }); } }
     }
+    return out.filter(function (x) { return isFinite(x.p); });
   }
-  let slOk = true;
-  if (lv) slOk = add(lv.dist <= CFG.slMaxAtr * atr,
-    "SL faasla $" + lv.dist.toFixed(2) + (lv.dist <= CFG.slMaxAtr * atr ? " theek" : " bohat zyada (" + CFG.slMaxAtr + "x ATR se oopar)"));
+  function nearestLevel(levels, price, dir, gap, atr) {
+    // dir +1 = above price, -1 = below price; levels closer than 0.2 ATR are named together
+    var c = levels.filter(function (x) { return dir > 0 ? x.p > price + gap : x.p < price - gap; });
+    if (!c.length) return null;
+    c.sort(function (a, b) { return dir > 0 ? a.p - b.p : b.p - a.p; });
+    var best = c[0], names = [], near = (atr || gap) * 0.2;
+    c.forEach(function (x) { if (Math.abs(x.p - best.p) <= near && names.indexOf(x.label) < 0) names.push(x.label); });
+    return { p: best.p, label: names.slice(0, 2).join(" + ") };
+  }
 
-  // room to the first target (next support / resistance)
-  let roomOk = true;
-  if (lv) {
-    const L = d.levels;
-    const cands = (t1 < 0)
-      ? [L.today_low, L.prev_day_low, L.pivot_S1, L.pivot_S2].filter(x => x < lv.entry - 0.3 * atr)
-      : [L.today_high, L.prev_day_high, L.pivot_R1, L.pivot_R2].filter(x => x > lv.entry + 0.3 * atr);
-    if (cands.length) {
-      const nearest = (t1 < 0) ? Math.max(...cands) : Math.min(...cands);
-      const room = Math.abs(nearest - lv.entry);
-      roomOk = add(room >= lv.dist, "Agla level " + nearest.toFixed(2) + " tak jagah $" + room.toFixed(2) +
-        (room >= lv.dist ? " (kaafi)" : " (kam - TP se pehle rukawat)"));
+  // spot DCA steps for an entry
+  function spotSteps(entry, atr, sl0, dcaOn) {
+    if (!dcaOn) return { steps: [{ p: entry, w: 1 }], sl: sl0 };
+    return {
+      steps: [{ p: entry, w: CFG.dcaW[0] }, { p: entry - CFG.dcaStepAtr * atr, w: CFG.dcaW[1] }, { p: entry - 2 * CFG.dcaStepAtr * atr, w: CFG.dcaW[2] }],
+      sl: entry - CFG.dcaSlAtr * atr
+    };
+  }
+  // money result if 1, 2 or all steps fill, then SL or TP1 hits (fees included)
+  function spotScenarios(steps, sl, tp1, amount) {
+    var q = 0, cost = 0, rows = [];
+    steps.forEach(function (st) {
+      var usd = amount * st.w;
+      q += st.p > 0 ? usd / st.p : 0; cost += usd;
+      rows.push({
+        avg: q > 0 ? cost / q : 0, cost: cost, qty: q,
+        sl: cost - q * sl + cost * CFG.fee + q * sl * CFG.fee,
+        tp: q * tp1 - cost - cost * CFG.fee - q * tp1 * CFG.fee
+      });
+    });
+    return rows;
+  }
+
+  function zonePlan(ctx, sym, tf, dir) {
+    var S = SYMS[sym], B = ctx.bars[sym] || {}, e = lastClosed(B[tf]), P = ctx.price[sym];
+    if (!e || !(e.atr > 0) || !isFinite(P)) return null;
+    var A = e.atr, lv = srLevels(ctx, sym, tf);
+    var want = dir < 0 ? 1 : -1;                      // trend down -> resistance above, else support below
+    var z = nearestLevel(lv, P, want, 0.5 * A, A);
+    if (!z) return null;
+    var plan = { dir: want > 0 ? "SELL" : "BUY", level: z.p, label: z.label, zoneLo: z.p - 0.2 * A, zoneHi: z.p + 0.2 * A, atr: A };
+    if (S.spot && plan.dir === "SELL") { plan.exitOnly = true; return plan; }
+    if (plan.dir === "BUY") { plan.entry = z.p + 0.1 * A; plan.sl = z.p - 1.0 * A; plan.dist = plan.entry - plan.sl;
+      plan.tp1 = plan.entry + CFG.tp1R * plan.dist; plan.tp2 = plan.entry + CFG.tp2R * plan.dist; }
+    else { plan.entry = z.p - 0.1 * A; plan.sl = z.p + 1.0 * A; plan.dist = plan.sl - plan.entry;
+      plan.tp1 = plan.entry - CFG.tp1R * plan.dist; plan.tp2 = plan.entry - CFG.tp2R * plan.dist; }
+    plan.cond = tf + " candle " + fmt(z.p, S.dp) + " ke paas aa kar wapas " + (plan.dir === "BUY" ? "upar" : "neeche") + " band ho";
+    return plan;
+  }
+
+  function evaluate(ctx, sym, tf) {
+    var S = SYMS[sym], I = TFINFO[tf], B = ctx.bars[sym] || {};
+    var res = { sym: sym, tf: tf, side: "WAIT", reason: "", checks: [], levels: null, plan: null, price: ctx.price[sym], atr: NaN };
+    var add = function (ok, text) { res.checks.push({ ok: !!ok, text: text }); return !!ok; };
+    var E = B[tf], ei = lastClosedIdx(E), e = ei >= 0 ? E[ei] : null;
+    var t = tf === "W1" ? e : lastClosed(B[I.trend]);
+    var f = I.filter ? lastClosed(B[I.filter]) : null;
+    if (!e || !t || !(e.atr > 0) || !isFinite(e.ema50) || !isFinite(ctx.price[sym])) {
+      res.noData = true;
+      res.reason = (sym === "gold" && tf === "W1") ? "Gold W1 ke liye PAXG ka data nahi mila" : "Data nahi mila";
+      return res;
     }
-  }
-  res.levels = lv;
+    res.atr = e.atr; res.barT = e.t; res.barEnd = e.t + I.ms;
+    var ok = true;
 
-  const all = fresh && timeOk && spreadOk && trendOk && adxOk && h4Ok && trigOk && rsiOk && slOk && roomOk;
-  if (all) {
-    res.side = t1 < 0 ? "SELL" : "BUY";
-    res.reason = (t1 < 0 ? "H1 neeche ka trend, M15 par EMA20 se rejection" : "H1 oopar ka trend, M15 par EMA20 se uchaal");
-  } else {
-    res.side = "WAIT";
-    const firstFail = res.checks.find(c => !c.ok);
-    res.reason = firstFail ? firstFail.text : "Shart poori nahi";
-    if (t1 !== 0 && fresh) res.reason += " | Trend " + (t1 < 0 ? "SELL" : "BUY") + " ki taraf - wapsi ka intezaar";
+    if (!S.spot) {
+      var info = ctx.exp.info;
+      var gmt = serverToMs(info.gmt_time || info.server_time), tick = serverToMs(info.last_tick_time);
+      var age = isFinite(gmt) ? (ctx.now - gmt) / 60000 : 999, tickAge = isFinite(tick) && isFinite(gmt) ? (gmt - tick) / 60000 : 0;
+      ok = add(age <= CFG.staleMinutes && tickAge <= 10,
+        age > CFG.staleMinutes ? "Data purana hai (" + Math.round(age) + " min): market band ya MT5 ruka hua"
+          : tickAge > 10 ? "Market band hai (naye ticks nahi)" : "Data taaza hai") && ok;
+      if (tf === "M15" || tf === "H1") {
+        var hr = new Date(isFinite(gmt) ? gmt : ctx.now).getUTCHours();
+        var blocked = hr >= CFG.goldBlockFrom || hr < CFG.goldBlockTo;
+        ok = add(!blocked, blocked ? "Waqt theek nahi (01:00 – 06:00 PKT, din ka close)" : "Waqt theek hai") && ok;
+      }
+      var sp = Number(info.spread);
+      ok = add(sp <= CFG.maxSpread, "Spread " + fmt(sp, 2) + (sp <= CFG.maxSpread ? " theek" : " zyada hai")) && ok;
+    } else if (S.goldHours && tf !== "D1" && tf !== "W1" && goldWeekend(ctx.now)) {
+      ok = add(false, "Weekend: asal gold market band hai (M15 / H1 / H4 signal Monday se)") && ok;
+    }
+
+    if (ctx.events) {
+      var ev = nearEvent(ctx.events, ctx.now);
+      ok = add(!ev, ev ? "News: " + ev.title + " (" + pktTime(ev.t) + " PKT) ke qareeb" : "60 min aage peeche koi bari US news nahi") && ok;
+    }
+
+    var dir = trendDir(t);
+    ok = add(dir !== 0, dir > 0 ? I.trend + " trend UP (EMA20 > EMA50, +DI aage)"
+      : dir < 0 ? I.trend + " trend DOWN (EMA20 < EMA50, −DI aage)" : I.trend + " trend saaf nahi") && ok;
+    ok = add(t.adx >= CFG.minAdx, I.trend + " ADX " + fmt(t.adx, 1) + (t.adx >= CFG.minAdx ? " (trend mein jaan hai)" : " (kamzor, 20 se kam)")) && ok;
+    if (f) {
+      var opp = dir > 0 ? (f.c < f.ema20 && f.mdi > f.pdi + 5) : dir < 0 ? (f.c > f.ema20 && f.pdi > f.mdi + 5) : false;
+      ok = add(!opp, opp ? I.filter + " ulti taraf ja raha hai" : I.filter + " rukawat nahi") && ok;
+    }
+    if (S.spot && dir < 0) ok = add(false, "Spot mein sirf BUY hota hai; trend neeche hai") && ok;
+    if (S.btcFilter) {
+      var bt = (ctx.bars.btc && (tf === "W1" ? lastClosed(ctx.bars.btc.W1) : lastClosed(ctx.bars.btc[I.trend]))) || null;
+      var bup = bt ? bt.ema20 > bt.ema50 : false;
+      ok = add(bup, "BTC filter: BTC " + I.trend + (bt ? (bup ? " UP" : " UP nahi") : " ka data nahi")) && ok;
+    }
+
+    var trig = false, rsiOk = false;
+    if (dir > 0) {
+      var touched = e.l <= e.ema20 + CFG.touchAtr * e.atr;
+      trig = touched && e.c > e.ema20 && e.c > e.o && e.sar < e.c;
+      add(trig, trig ? tf + ": EMA20 tak wapsi + hara candle upar band"
+        : touched ? tf + ": EMA20 tak aaya, lekin hara candle upar band nahi hua" : tf + ": abhi EMA20 tak wapsi nahi (pullback ka intezar)");
+      rsiOk = add(e.rsi >= CFG.buyRsi[0] && e.rsi <= CFG.buyRsi[1], tf + " RSI " + fmt(e.rsi, 1) + " (BUY ke liye 40 – 65)");
+    } else if (dir < 0 && !S.spot) {
+      var touched2 = e.h >= e.ema20 - CFG.touchAtr * e.atr;
+      trig = touched2 && e.c < e.ema20 && e.c < e.o && e.sar > e.c;
+      add(trig, trig ? tf + ": EMA20 tak wapsi + laal candle neeche band"
+        : touched2 ? tf + ": EMA20 tak aaya, lekin laal candle neeche band nahi hua" : tf + ": abhi EMA20 tak wapsi nahi (pullback ka intezar)");
+      rsiOk = add(e.rsi >= CFG.sellRsi[0] && e.rsi <= CFG.sellRsi[1], tf + " RSI " + fmt(e.rsi, 1) + " (SELL ke liye 35 – 60)");
+    } else if (dir === 0) {
+      add(false, tf + " entry: pehle " + I.trend + " ka trend chahiye");
+    }
+    ok = ok && trig && rsiOk;
+
+    // levels (also shown as a plan while waiting)
+    var lv = null;
+    if (dir !== 0 && !(S.spot && dir < 0)) {
+      var sw = E.slice(Math.max(0, ei - 4), ei + 1), A = e.atr, entry, sl, dist;
+      if (dir > 0) {
+        entry = S.spot ? ctx.price[sym] : Number(ctx.exp.info.ask);
+        sl = Math.min.apply(null, sw.map(function (r) { return r.l; })) - CFG.slBufferAtr * A;
+        dist = entry - sl;
+        if (dist < CFG.slMinAtr * A) { dist = CFG.slMinAtr * A; sl = entry - dist; }
+        lv = { dir: 1, entry: entry, sl: sl, dist: dist, tp1: entry + CFG.tp1R * dist, tp2: entry + CFG.tp2R * dist };
+      } else {
+        entry = Number(ctx.exp.info.bid);
+        sl = Math.max.apply(null, sw.map(function (r) { return r.h; })) + CFG.slBufferAtr * A;
+        dist = sl - entry;
+        if (dist < CFG.slMinAtr * A) { dist = CFG.slMinAtr * A; sl = entry + dist; }
+        lv = { dir: -1, entry: entry, sl: sl, dist: dist, tp1: entry - CFG.tp1R * dist, tp2: entry - CFG.tp2R * dist };
+      }
+      ok = add(lv.dist <= CFG.slMaxAtr * A, "SL faasla " + fmt(lv.dist, S.dp) + (lv.dist <= CFG.slMaxAtr * A ? " theek" : " bohat zyada (2.5 ATR se upar)")) && ok;
+      var nl = nearestLevel(srLevels(ctx, sym, tf), lv.entry, dir, 0.3 * A, A);
+      if (nl) {
+        var room = Math.abs(nl.p - lv.entry);
+        ok = add(room >= lv.dist, "Agla level " + fmt(nl.p, S.dp) + " (" + nl.label + ") tak jagah " + fmt(room, S.dp) +
+          (room >= lv.dist ? " (kaafi)" : " (kam: TP se pehle rukawat)")) && ok;
+      }
+      if (S.spot) {
+        var pct = (lv.tp1 - lv.entry) / lv.entry * 100;
+        ok = add(pct >= CFG.spotMinTpPct, "TP1 " + fmt(pct, 2) + "% door" + (pct >= CFG.spotMinTpPct ? " (fees ke baad bhi faida)" : " (fees ke muqable chhota, 0.8% chahiye)")) && ok;
+      }
+    }
+    res.levels = lv;
+
+    if (ok) {
+      res.side = dir > 0 ? "BUY" : "SELL";
+      res.reason = I.trend + (dir > 0 ? " trend upar; price " : " trend neeche; price ") + tf + " EMA20 tak wapas aa kar " + (dir > 0 ? "upar" : "neeche") + " band hui";
+      return res;
+    }
+    // spot EXIT: candle closed under EMA50 with EMA20 under EMA50, in the last few candles
+    if (S.spot) {
+      for (var j = 0; j < CFG.exitBars && ei - j - 1 >= 0; j++) {
+        var cur = E[ei - j], prv = E[ei - j - 1];
+        if (cur.c < cur.ema50 && cur.ema20 < cur.ema50 && prv.c >= prv.ema50 && e.c < e.ema50) {
+          res.side = "EXIT";
+          res.exitT = cur.t;
+          res.reason = tf + " candle EMA50 (" + fmt(cur.ema50, S.dp) + ") ke neeche band hui, trend palat gaya";
+          break;
+        }
+      }
+    }
+    if (res.side !== "EXIT") {
+      var fail = res.checks.filter(function (c) { return !c.ok; })[0];
+      res.reason = fail ? fail.text : "Sharten poori nahi";
+    }
+    res.plan = zonePlan(ctx, sym, tf, dir);
+    return res;
   }
-  return res;
-}
+
+  function evaluateAll(ctx) {
+    var out = {};
+    ORDER.forEach(function (s) {
+      out[s] = {};
+      TFS.forEach(function (tf) { out[s][tf] = evaluate(ctx, s, tf); });
+    });
+    return out;
+  }
+
+  function tfRows(ctx, sym) {
+    var B = ctx.bars[sym] || {};
+    return TFS.map(function (tf) {
+      var r = lastClosed(B[tf]);
+      return { tf: tf, trend: trendLabel(r), dir: r ? trendDir(r) : 0, rsi: r ? r.rsi : NaN, adx: r ? r.adx : NaN };
+    });
+  }
+
+  return {
+    CFG: CFG, TFS: TFS, TFINFO: TFINFO, SYMS: SYMS, ORDER: ORDER, SPOT: SPOT,
+    fmt: fmt, pktTime: pktTime, serverToMs: serverToMs, parseExport: parseExport, goldBars: goldBars,
+    addIndicators: addIndicators, klinesToBars: klinesToBars, loadSpot: loadSpot, buildCtx: buildCtx,
+    lastClosed: lastClosed, lastClosedIdx: lastClosedIdx, trendDir: trendDir, trendLabel: trendLabel,
+    evaluate: evaluate, evaluateAll: evaluateAll, tfRows: tfRows, spotSteps: spotSteps, spotScenarios: spotScenarios,
+    goldWeekend: goldWeekend
+  };
+})();
 /*LOGIC_END*/
 
-/* ---------------- UI ---------------- */
-const $ = id => document.getElementById(id);
-const f2 = v => (v === undefined || v === null || isNaN(v)) ? "-" : Number(v).toFixed(2);
+/* ---------------- page ---------------- */
+var $ = function (id) { return document.getElementById(id); };
+var fmt = STS.fmt, SYMS = STS.SYMS, TFS = STS.TFS, TFINFO = STS.TFINFO;
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+function lsGet(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function lsJson(k, d) { try { var v = JSON.parse(lsGet(k, "null")); return v === null ? d : v; } catch (e) { return d; } }
 
-function loadPrefs() {
-  try {
-    const b = localStorage.getItem("gs_bal"), l = localStorage.getItem("gs_lot");
-    if (b) $("inBal").value = b;
-    if (l) $("inLot").value = l;
-  } catch (e) {}
-}
-function savePrefs() {
-  try { localStorage.setItem("gs_bal", $("inBal").value); localStorage.setItem("gs_lot", $("inLot").value); } catch (e) {}
-}
+var UI = {
+  tab: lsGet("ax_tab", "btc"), tf: lsGet("ax_tf", "H4"), amt: lsGet("ax_amt", "100"), dca: lsGet("ax_dca", "1") === "1",
+  nsym: lsJson("ax_nsym", STS.ORDER.slice()), ntf: lsJson("ax_ntf", ["M15", "H1", "H4", "D1"])
+};
+if (!SYMS[UI.tab]) UI.tab = "btc";
+if (TFS.indexOf(UI.tf) < 0) UI.tf = "H4";
+var D = { ctx: null, res: {}, rows: {}, from: {}, state: null, errors: [], at: 0, busy: false };
 
-let lastData = null;
+var CHART = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="15 7 21 7 21 13"></polyline></svg>';
 
-function render(d) {
-  const nowMs = Date.now();
-  const sig = computeSignal(d, nowMs);
-
-  const gmt = serverToDate(d.info.gmt_time || d.info.server_time);
-  const pkt = gmt ? new Date(gmt.getTime() + 5 * 3600000) : null;
-  const ageMin = gmt ? Math.round((nowMs - gmt.getTime()) / 60000) : "?";
-  $("stamp").textContent = "Data: " + (pkt ? pkt.toISOString().slice(11, 16) + " PKT" : "-") +
-    " (" + ageMin + " min pehle)  |  Bid " + f2(d.info.bid) + " / Ask " + f2(d.info.ask);
-
-  const card = $("sigCard");
-  card.className = "card signal " + sig.side.toLowerCase();
-  $("sigBig").textContent = sig.side;
-  $("sigWhy").textContent = sig.reason;
-
-  const lv = sig.levels;
-  const lot = Math.max(0.01, Number($("inLot").value) || 0.01);
-  const bal = Number($("inBal").value) || 0;
-  if (lv) {
-    const tag = sig.side === "WAIT" ? " (plan)" : "";
-    $("sigLevels").innerHTML =
-      '<div class="box"><div class="k">Entry' + tag + '</div><div class="v">' + f2(lv.entry) + '</div></div>' +
-      '<div class="box"><div class="k">SL</div><div class="v">' + f2(lv.sl) + '</div></div>' +
-      '<div class="box"><div class="k">TP1 / TP2</div><div class="v">' + f2(lv.tp1) + '</div><div class="k">' + f2(lv.tp2) + '</div></div>';
-    const risk = lv.dist * lot * 100, rew = lv.dist * CFG.tp1R * lot * 100;
-    const pct = bal > 0 ? (risk / bal * 100) : 0;
-    $("sigRisk").innerHTML = "Lot " + lot.toFixed(2) + ": SL par -$" + risk.toFixed(2) + " | TP1 par +$" + rew.toFixed(2) +
-      (bal > 0 ? " | Risk " + pct.toFixed(1) + "% of balance" + (pct > 5 ? ' <b class="no">(zyada!)</b>' : "") : "");
-  } else {
-    $("sigLevels").innerHTML = "";
-    $("sigRisk").textContent = "";
-  }
-
-  $("checks").innerHTML = sig.checks.map(c =>
-    '<li><span class="' + (c.ok ? "ok" : "no") + '">' + (c.ok ? "&#10003;" : "&#10007;") + "</span><span>" +
-    c.text.replace(/[<>&]/g, s => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[s])) + "</span></li>").join("");
-
-  $("tfTable").innerHTML = ["M5", "M15", "H1", "H4", "D1"].map(tf => {
-    const r = lastClosed(d.tf[tf]);
-    if (!r) return "<tr><td>" + tf + '</td><td colspan="5" class="nt">-</td></tr>';
-    const t = tfTrend(r);
-    const tt = t < 0 ? '<span class="dn">&#9660; Neeche</span>' : t > 0 ? '<span class="up">&#9650; Oopar</span>' : '<span class="nt">Mixed</span>';
-    const sar = r.sar > r.close ? '<span class="dn">oopar</span>' : '<span class="up">neeche</span>';
-    return "<tr><td><b>" + tf + "</b></td><td>" + tt + "</td><td>" + f2(r.rsi) + "</td><td>" + f2(r.adx) +
-      "</td><td>" + f2(r.plus_di) + " / " + f2(r.minus_di) + "</td><td>" + sar + "</td></tr>";
-  }).join("");
-
-  const L = d.levels;
-  const rows = [
-    ["Aaj high / low", f2(L.today_high) + " / " + f2(L.today_low)],
-    ["Kal high / low", f2(L.prev_day_high) + " / " + f2(L.prev_day_low)],
-    ["VWAP (aaj)", f2(d.info.vwap_today)],
-    ["R2 / R1", f2(L.pivot_R2) + " / " + f2(L.pivot_R1)],
-    ["Pivot", f2(L.pivot_P)],
-    ["S1 / S2", f2(L.pivot_S1) + " / " + f2(L.pivot_S2)],
-    ["Hafta high / low", f2(L.week_high) + " / " + f2(L.week_low)]
-  ];
-  $("levels").innerHTML = rows.map(r => '<div class="row"><span>' + r[0] + "</span><b>" + r[1] + "</b></div>").join("");
+function fetchText(url) {
+  return fetch(url + (url.indexOf("?") < 0 ? "?" : "&") + "t=" + Date.now(), { cache: "no-store" })
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
 }
 
-async function load() {
-  $("msg").innerHTML = "";
-  try {
-    const res = await fetch(CFG.dataUrl + "?t=" + Date.now(), { cache: "no-store" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const text = await res.text();
-    lastData = parseExport(text);
-    render(lastData);
-  } catch (e) {
-    $("msg").innerHTML = '<div class="err">Data load nahi hua (' + String(e.message || e) +
-      '). Internet check karein, phir Refresh dabayen.</div>';
-  }
-}
-
-$("refresh").addEventListener("click", load);
-["inBal", "inLot"].forEach(id => $(id).addEventListener("input", () => { savePrefs(); if (lastData) render(lastData); }));
-loadPrefs();
-load();
-setInterval(load, 60000);
-// App dobara kholne par foran naya data
-document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
-// Install support (home-screen app)
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
-}
-
-/* ---------------- Push notifications ---------------- */
-const VAPID_PUBLIC = "BC7qbMjPryrFnzdvaegWkTUZ0i9HJeF8sZG5gut2vJz0YF8jV5uw-NAPRJSZSqFsQmMrGNQHrAwITgzsonbjLPk";
-
-function b64ToBytes(b64) {
-  const pad = "=".repeat((4 - b64.length % 4) % 4);
-  const raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from(raw, c => c.charCodeAt(0));
-}
-function showPushCode(sub) {
-  $("pushCode").value = JSON.stringify(sub);
-  $("pushCodeBox").style.display = "block";
-  $("pushBtn").innerHTML = "&#128276; Notifications ON hain (test dobara)";
-}
-async function enablePush() {
-  const st = $("pushState");
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
-    st.textContent = "Is browser mein notifications support nahi. Chrome mein kholein."; return;
-  }
-  try {
-    const perm = await Notification.requestPermission();
-    if (perm !== "granted") {
-      st.textContent = "Notifications block hain. Chrome: link ke saath wala icon > Permissions > Notifications > Allow."; return;
-    }
-    const reg = await navigator.serviceWorker.register("sw.js");
-    await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
-    showPushCode(sub);
-    await reg.showNotification("Gold Signal ✅", {
-      body: "Phone par notifications ON. Ab neeche wala code copy karke GitHub mein dalen.",
-      icon: "icon-192.png", badge: "badge-96.png", tag: "gold-signal-local"
+function load() {
+  if (D.busy) return;
+  D.busy = true;
+  var now = Date.now(), errors = [];
+  var pGold = fetchText(STS.CFG.goldUrl).catch(function (e) { errors.push("Gold data: " + e.message); return null; });
+  var pState = fetchText(STS.CFG.stateUrl).then(function (t) { return JSON.parse(t); }).catch(function () { return null; });
+  var pSpot = STS.loadSpot(function (u, o) { return fetch(u, o); }, now);
+  Promise.all([pGold, pState, pSpot]).then(function (r) {
+    var goldText = r[0], state = r[1], spot = r[2];
+    errors = errors.concat(spot.errors);
+    var ctx = STS.buildCtx({ goldText: goldText, spot: spot, now: now, events: state && state.events, trades: state && state.trades });
+    var res = STS.evaluateAll(ctx), rows = {}, from = {};
+    STS.ORDER.forEach(function (s) {
+      rows[s] = STS.tfRows(ctx, s);
+      from[s] = "live";
+      var snap = state && state.snap, n = 0;
+      TFS.forEach(function (tf) {
+        if (res[s][tf].noData && snap && snap.res && snap.res[s] && snap.res[s][tf] && !snap.res[s][tf].noData) {
+          res[s][tf] = snap.res[s][tf]; n++;
+        }
+      });
+      if (n >= 3) from[s] = "server";
+      if (from[s] === "server" && snap) {
+        if (snap.rows && snap.rows[s]) rows[s] = snap.rows[s];
+        if (!isFinite(ctx.price[s]) && snap.price) ctx.price[s] = snap.price[s];
+        if (!isFinite(ctx.change[s]) && snap.change) ctx.change[s] = snap.change[s];
+      }
     });
-    st.textContent = "ON. Code copy karke GitHub mein PUSH_SUB secret mein dalen (sirf pehli dafa).";
-  } catch (e) {
-    st.textContent = "Error: " + (e && e.message ? e.message : e);
+    D.ctx = ctx; D.res = res; D.rows = rows; D.from = from; D.state = state; D.errors = errors; D.at = now;
+    render();
+  }).catch(function (e) {
+    $("msg").innerHTML = '<div class="err">Data load nahi hua (' + esc(e && e.message || e) + '). Internet check karke Refresh dabayen.</div>';
+  }).then(function () { D.busy = false; });
+}
+
+function cur() { return D.res[UI.tab] ? D.res[UI.tab][UI.tf] : null; }
+
+function render() {
+  if (!D.ctx) return;
+  var S = SYMS[UI.tab], r = cur(), ctx = D.ctx, st = D.state;
+  // stamp + messages
+  var goldT = ctx.exp ? STS.serverToMs(ctx.exp.info.gmt_time || ctx.exp.info.server_time) : NaN;
+  $("stamp").textContent = "Gold data " + (isFinite(goldT) ? STS.pktTime(goldT) + " PKT" : "-") +
+    " · Crypto " + (D.from.btc === "server" ? "server se" : "live") + " · " + STS.pktTime(D.at) + " PKT";
+  var msg = "";
+  var serverSyms = STS.ORDER.filter(function (s) { return D.from[s] === "server"; });
+  if (serverSyms.length && st && st.snap) {
+    msg += '<div class="warn">Binance se seedha data nahi mila. ' + esc(serverSyms.map(function (s) { return SYMS[s].label; }).join(", ")) +
+      " ka data server se hai (" + Math.max(0, Math.round((D.at - st.snap.at) / 60000)) + " min purana).</div>";
+  } else if (D.errors.length && STS.ORDER.some(function (s) { return D.res[s] && D.res[s][UI.tf] && D.res[s][UI.tf].noData; })) {
+    msg += '<div class="err">Kuch data nahi mila: ' + esc(D.errors.slice(0, 3).join(" | ")) + "</div>";
+  }
+  if (st && st.updated && !st.host && D.at - st.updated < 6 * 3600000)
+    msg += '<div class="warn">Server (GitHub) Binance tak nahi pohanch saka, is liye crypto ki notifications abhi nahi aayengi. Gold ki notifications chalti rahengi.</div>';
+  $("msg").innerHTML = msg;
+
+  // symbol tabs
+  $("tabs").innerHTML = STS.ORDER.map(function (s) {
+    var x = D.res[s] && D.res[s][UI.tf], side = !x || x.noData ? "NONE" : x.side;
+    return '<button class="tab" type="button" data-tab="' + s + '" aria-pressed="' + (s === UI.tab) + '"><span class="dot ' + side + '"></span><span>' + SYMS[s].label + "</span></button>";
+  }).join("");
+  $("tfs").innerHTML = TFS.map(function (tf) {
+    return '<button class="tfb" type="button" data-tf="' + tf + '" aria-pressed="' + (tf === UI.tf) + '">' + tf + "</button>";
+  }).join("");
+  $("hold").textContent = UI.tf + " trade aam taur par " + TFINFO[UI.tf].hold + " chalti hai · signal " + TFINFO[UI.tf].valid + " valid";
+
+  // price
+  var ch = ctx.change[UI.tab];
+  $("pricehead").innerHTML = '<div style="display:flex;flex-direction:column"><span class="small">' + esc(S.name) + " · " + esc(S.pair) +
+    '</span><span class="big">' + fmt(ctx.price[UI.tab], S.dp) + '</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="pill">' +
+    esc(S.venue) + "</span>" + (isFinite(ch) ? '<span class="' + (ch >= 0 ? "up" : "dn") + '" style="font-size:13px">' + (ch >= 0 ? "+" : "") + fmt(ch, 2) + "% (24h)</span>" : "") + "</div>";
+
+  renderSignal(S, r);
+  renderChecks(r);
+  renderTf();
+  renderPositions(S);
+  renderRecord();
+  renderNotif();
+}
+
+// spot trade plan (active BUY or a BUY zone plan)
+function spotTrade(S, r) {
+  if (!S.spot || !r || r.noData) return null;
+  if (r.side === "BUY" && r.levels) {
+    var a = STS.spotSteps(r.levels.entry, r.atr, r.levels.sl, UI.dca);
+    return { active: true, steps: a.steps, sl: a.sl, tp1: r.levels.tp1, tp2: r.levels.tp2, entry: r.levels.entry };
+  }
+  if (r.plan && r.plan.dir === "BUY" && !r.plan.exitOnly) {
+    var b = STS.spotSteps(r.plan.entry, r.plan.atr, r.plan.sl, UI.dca);
+    return { active: false, steps: b.steps, sl: b.sl, tp1: r.plan.tp1, tp2: r.plan.tp2, entry: r.plan.entry, plan: r.plan };
+  }
+  return null;
+}
+
+function box(k, v, s) { return '<div class="box"><span class="k">' + esc(k) + '</span><span class="v">' + v + '</span><span class="s">' + esc(s || "") + "</span></div>"; }
+function pct(a, b) { return (b - a) / a * 100; }
+
+function renderSignal(S, r) {
+  var el = $("signal"), dp = S.dp;
+  if (!r) { el.className = "signal"; el.innerHTML = ""; return; }
+  var side = r.noData ? "WAIT" : r.side;
+  el.className = "signal " + side;
+  var head = '<div class="head"><span class="tag">' + UI.tf + ' SIGNAL</span><span class="side">' + (r.noData ? "—" : side) +
+    '</span><span class="why">' + esc(r.reason) + "</span></div>";
+  var grid = "", rr = "";
+  var tr = spotTrade(S, r);
+  if (tr) {
+    var p0 = tr.steps[0].p, more = tr.steps.length > 1 ? "Phir DCA " + fmt(tr.steps[1].p, dp) + ", " + fmt(tr.steps[2].p, dp) : (tr.active ? "Ek hi entry" : "Ek hi limit");
+    grid = box(tr.active ? "Entry 1 (abhi)" : "Buy limit 1", fmt(p0, dp), more) +
+      box("Stop loss (sab par)", fmt(tr.sl, dp), fmt(pct(p0, tr.sl), 2) + "% pehli entry se") +
+      box("TP1", fmt(tr.tp1, dp), "+" + fmt(pct(p0, tr.tp1), 2) + "%") + box("TP2", fmt(tr.tp2, dp), "+" + fmt(pct(p0, tr.tp2), 2) + "%");
+    if (!tr.active) rr = "Plan: zone " + fmt(tr.plan.level, dp) + " (" + tr.plan.label + ") · sharat: " + tr.plan.cond;
+  } else if (!S.spot && (side === "BUY" || side === "SELL") && r.levels) {
+    var L = r.levels;
+    grid = box("Entry (abhi, " + (side === "BUY" ? "Buy" : "Sell") + ")", fmt(L.entry, dp), "") + box("Stop loss", fmt(L.sl, dp), fmt(L.dist, dp) + " door") +
+      box("TP1", fmt(L.tp1, dp), "1 : " + STS.CFG.tp1R) + box("TP2", fmt(L.tp2, dp), "1 : " + STS.CFG.tp2R);
+  } else if (!S.spot && r.plan && !r.noData) {
+    var P = r.plan;
+    grid = box((P.dir === "BUY" ? "Buy" : "Sell") + " limit", fmt(P.entry, dp), "Zone " + fmt(P.level, dp) + " (" + P.label + ")") +
+      box("Stop loss", fmt(P.sl, dp), "Zone ke bahar") + box("TP1", fmt(P.tp1, dp), "") + box("TP2", fmt(P.tp2, dp), "");
+  }
+  el.innerHTML = head + (grid ? '<div class="grid2">' + grid + "</div>" : "") + (rr ? '<span class="rr">' + esc(rr) + "</span>" : "");
+
+  // chip
+  var chip = "";
+  if (UI.tab === "paxg") chip = "PAXG = 1 ounce asal gold ka token. Ye gold ke saath chalta hai, is par BTC filter nahi. Weekend par asal gold market band hoti hai.";
+  else if (UI.tab === "btc") chip = "BTC leader hai; is ka trend ETH, SOL aur BNB ke liye filter hai.";
+  else if (S.btcFilter) {
+    var bc = r.checks && r.checks.filter(function (c) { return c.text.indexOf("BTC filter") === 0; })[0];
+    if (bc) chip = bc.ok ? "BTC filter theek: " + bc.text.replace("BTC filter: ", "") + "." : bc.text + ", is liye " + S.label + " par BUY nahi.";
+  } else if (UI.tab === "gold" && UI.tf === "W1") chip = "Gold ka W1 PAXG (Binance) ke weekly data se bana hai.";
+  $("chip").innerHTML = chip ? '<div class="chip">' + CHART + "<span>" + esc(chip) + "</span></div>" : "";
+
+  renderTrade(S, r, tr);
+}
+
+function renderTrade(S, r, tr) {
+  var dp = S.dp, html = "", extra = "";
+  if (tr) {
+    var amt = parseFloat(UI.amt); if (!(amt > 0)) amt = 0;
+    var sc = STS.spotScenarios(tr.steps, tr.sl, tr.tp1, amt);
+    var labels = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit lage"] :
+      tr.active ? ["Sirf Entry 1", "Entry 1 + 2", "Teeno lage"] : ["Sirf limit 1", "Limit 1 + 2", "Teeno lage"];
+    var names = tr.steps.length === 1 ? [tr.active ? "Entry" : "Limit"] : tr.active ? ["Entry 1", "DCA 2", "DCA 3"] : ["Limit 1", "Limit 2", "Limit 3"];
+    var steps = tr.steps.map(function (s, i) {
+      var usd = amt * s.w;
+      return '<span class="b">' + names[i] + " <small>" + Math.round(s.w * 100) + '%</small></span><span class="b">' +
+        fmt(s.p, dp) + "</span><span>$" + fmt(usd, 2) + "</span><span>" + fmt(s.p > 0 ? usd / s.p : 0, S.qd) + "</span>";
+    }).join("");
+    var scen = sc.map(function (x, i) {
+      return "<span>" + labels[i] + "</span><span>" + fmt(x.avg, dp) + '</span><span class="red">−$' + fmt(x.sl, 2) + '</span><span class="grn">+$' + fmt(x.tp, 2) + "</span>";
+    }).join("");
+    html = '<section class="card"><h2>' + (tr.active ? "Entry, DCA aur USDT" : "Plan: limit, DCA aur USDT") + '</h2>' +
+      '<div class="inrow"><label for="amt">Kul amount (USDT)<input id="amt" type="number" inputmode="decimal" min="0" step="1" value="' + esc(UI.amt) + '"></label>' +
+      '<button class="tog" id="dcaBtn" type="button" aria-pressed="' + UI.dca + '">' + (UI.dca ? "DCA ON" : "DCA OFF") + "</button></div>" +
+      '<div class="tbl t4"><span class="h">Step</span><span class="h">Price</span><span class="h">USDT</span><span class="h">Coin</span>' + steps +
+      '<span class="red">SL</span><span class="red">' + fmt(tr.sl, dp) + '</span><span class="nt">sab par</span><span class="nt">ek hi SL</span></div>' +
+      '<h3>Agar SL ya TP1 lage (fees samet)</h3><div class="tbl t4b"><span class="h">Kitne lage</span><span class="h">Avg price</span><span class="h">SL par</span><span class="h">TP1 par</span>' + scen + "</div>" +
+      '<span class="small">' + (UI.dca ? "Raqam 40% / 30% / 30% mein bati. SL DCA 3 ke neeche, sab par ek. " : "DCA band: poori raqam ek entry par. ") + "Binance fee 0.1% + 0.1% shamil.</span></section>";
+    var qtyAll = sc.length ? sc[sc.length - 1].qty : 0;
+    var orders = tr.steps.map(function (s, i) {
+      var k = tr.active && i === 0 ? "Buy (market) abhi" : "Buy limit (" + names[i] + ")";
+      return '<div class="row"><span>' + k + "</span><b>$" + fmt(amt * s.w, 2) + " @ " + fmt(s.p, dp) + "</b></div>";
+    }).join("");
+    extra += '<section class="card"><h2>Binance par orders</h2>' + orders +
+      '<div class="row"><span>OCO sell: take profit</span><b>' + fmt(tr.tp1, dp) + "</b></div>" +
+      '<div class="row"><span>OCO sell: stop / limit</span><b>' + fmt(tr.sl, dp) + " / " + fmt(tr.sl * 0.999, dp) + "</b></div>" +
+      '<div class="row"><span>OCO quantity (sab lagne par)</span><b>' + fmt(qtyAll, S.qd) + " " + S.sym + "</b></div>" +
+      '<span class="small">Har DCA fill ke baad OCO ki quantity barha dein. Notification yaad dilayegi.</span></section>';
+    extra += '<section class="info"><b>DCA ke qaide</b><ul>' +
+      "<li>DCA ka matlab: wahi raqam hisson mein lagana. Nayi raqam nahi jorni.</li>" +
+      "<li>Poori position ka ek hi SL. SL lag gaya to sab band, dobara DCA nahi.</li>" +
+      "<li>Max nuqsan pehle se maloom hai: \"Teeno lage\" wali line.</li>" +
+      "<li>Sirf Entry 1 lag kar TP aaye to faida kam hota hai; DCA tab faida deta hai jab price DCA tak aa kar wapas mude.</li>" +
+      "<li>SL kabhi door na khiskayen. Exness Gold par DCA nahi (leverage); PAXG spot hai, us par DCA ho sakta hai.</li></ul></section>";
+  } else if (!S.spot && r && !r.noData) {
+    var L = r.levels;
+    if ((r.side === "BUY" || r.side === "SELL") && L) {
+      extra = '<section class="card"><h2>Exness par</h2><span>' + (r.side === "BUY" ? "Buy" : "Sell") + " (market) abhi, SL <b>" + fmt(L.sl, dp) +
+        "</b>, TP1 <b>" + fmt(L.tp1, dp) + "</b>, TP2 <b>" + fmt(L.tp2, dp) + '</b>.</span><span class="small">Candle band hui: ' + STS.pktTime(r.barEnd, true) +
+        " PKT · signal " + TFINFO[UI.tf].valid + " valid · Gold par DCA nahi: ek order, ek SL.</span></section>";
+    } else if (r.plan) {
+      var P = r.plan;
+      extra = '<section class="card"><h2>Kab lagayen (Exness)</h2><span><b>' + P.dir + " plan · zone " + fmt(P.zoneLo, dp) + " – " + fmt(P.zoneHi, dp) +
+        "</b> (" + esc(P.label) + ")</span><span>Sharat: " + esc(P.cond) + ". Tab <b>" + (P.dir === "BUY" ? "Buy" : "Sell") + " limit " + fmt(P.entry, dp) +
+        "</b>, SL <b>" + fmt(P.sl, dp) + "</b>, TP1 <b>" + fmt(P.tp1, dp) + "</b>, TP2 <b>" + fmt(P.tp2, dp) +
+        '</b>.</span><span class="small">Gold par DCA nahi: ek order, ek SL.</span></section>';
+    }
+  } else if (S.spot && r && !r.noData) {
+    var note;
+    if (r.side === "EXIT") note = "Agar " + S.sym + " khareeda hua hai to bech dein (Market ya Limit order). Naya BUY nahi.";
+    else if (r.plan && r.plan.exitOnly) note = "Trend neeche hai, naya BUY nahi. Agar " + S.sym + " hold hai to zone " + fmt(r.plan.zoneLo, dp) + " – " + fmt(r.plan.zoneHi, dp) +
+      " (" + r.plan.label + ") ke paas bechne ka socein.";
+    else note = "Abhi kuch na karein. " + UI.tf + " par setup bante hi notification aayegi.";
+    extra = '<section class="card"><h2>Ab kya karein</h2><span>' + esc(note) + '</span><span class="small">Doosra timeframe chun kar dekhein, wahan signal ho sakta hai.</span></section>';
+  }
+  $("trade").innerHTML = html;
+  $("extra").innerHTML = extra;
+  var amtEl = $("amt");
+  if (amtEl) amtEl.addEventListener("input", function () {
+    UI.amt = amtEl.value; lsSet("ax_amt", UI.amt);
+    var pos = amtEl.selectionStart;
+    renderTrade(SYMS[UI.tab], cur(), spotTrade(SYMS[UI.tab], cur()));
+    var n = $("amt"); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {}
+  });
+}
+
+function renderChecks(r) {
+  $("chkTitle").textContent = "Signal checklist (" + UI.tf + ")";
+  $("checks").innerHTML = (r && r.checks || []).map(function (c) {
+    return '<div><span class="m ' + (c.ok ? "grn" : "red") + '">' + (c.ok ? "✓" : "✗") + "</span><span>" + esc(c.text) + "</span></div>";
+  }).join("") || '<div><span class="nt">Data nahi</span></div>';
+}
+
+function renderTf() {
+  var rows = D.rows[UI.tab] || [];
+  $("tfTable").innerHTML = '<span class="h">TF</span><span class="h">Trend</span><span class="h">RSI</span><span class="h">ADX</span>' +
+    rows.map(function (x) {
+      var c = x.tf === UI.tf ? ' sel' : "", cl = x.trend.indexOf("Up") === 0 ? "up" : x.trend.indexOf("Down") === 0 ? "dn" : "nt";
+      return '<span class="b' + c + '">' + x.tf + '</span><span class="' + cl + c + '">' + esc(x.trend) + '</span><span class="' + c + '">' + fmt(x.rsi, 1) +
+        '</span><span class="' + c + '">' + fmt(x.adx, 1) + "</span>";
+    }).join("");
+  $("tfNote").textContent = UI.tab === "gold" ? "Gold W1: PAXG ke weekly data se." : "";
+}
+
+function openTrades() {
+  return ((D.state && D.state.trades) || []).filter(function (t) { return t.status === "open"; });
+}
+function renderPositions(S) {
+  if (!S.spot) { $("positions").innerHTML = ""; return; }
+  var open = openTrades().filter(function (t) { return SYMS[t.sym] && SYMS[t.sym].spot && !t.skip; });
+  var list = open.map(function (t) { return SYMS[t.sym].label + " " + t.tf + " (" + fmt(t.entry, SYMS[t.sym].dp) + ")"; });
+  $("positions").innerHTML = '<div class="info"><span><b>Positions limit:</b> ek waqt mein zyada se zyada ' + STS.CFG.maxOpenSpot +
+    " coins mein BUY. Teesra BUY aaye to skip karein, ye coins aksar ek saath chalte hain.</span><span>Record ke mutabiq khuli: " +
+    (list.length ? esc(list.join(", ")) + " (" + list.length + "/" + STS.CFG.maxOpenSpot + ")" : "koi nahi") + "</span></div>";
+}
+
+function renderRecord() {
+  var tr = (D.state && D.state.trades) || [];
+  var done = tr.filter(function (t) { return t.status !== "open" && t.status !== "skipped"; });
+  if (!tr.length) {
+    $("record").innerHTML = '<span class="small">Abhi khaali hai. Notification wala system chalne ke baad yahan har signal ka nateeja (TP ya SL) aayega, taake pata chale kaun sa coin aur timeframe asal mein kaam karta hai.</span>';
+    return;
+  }
+  function stats(list) {
+    var w = 0, l = 0, rs = 0;
+    list.forEach(function (t) { if (t.r > 0) w++; else l++; rs += t.r || 0; });
+    return { n: list.length, w: w, l: l, wr: list.length ? w / list.length * 100 : 0, avg: list.length ? rs / list.length : 0 };
+  }
+  var mine = done.filter(function (t) { return t.sym === UI.tab; });
+  var html = "", all = stats(done);
+  html += '<div class="row"><span>Sab signals (band ho chuke)</span><b>' + all.n + " · jeet " + fmt(all.wr, 0) + "% · avg " + fmt(all.avg, 2) + "R</b></div>";
+  html += '<div class="tbl t5" style="margin-top:4px"><span class="h">' + esc(SYMS[UI.tab].label) + '</span><span class="h">Kul</span><span class="h">Jeet / Haar</span><span class="h">Jeet %</span><span class="h">Avg R</span>' +
+    TFS.map(function (tf) {
+      var s = stats(mine.filter(function (t) { return t.tf === tf; })), c = tf === UI.tf ? " sel" : "";
+      return '<span class="b' + c + '">' + tf + '</span><span class="' + c + '">' + s.n + '</span><span class="' + c + '">' + s.w + " / " + s.l +
+        '</span><span class="' + c + '">' + (s.n ? fmt(s.wr, 0) + "%" : "-") + '</span><span class="' + c + '">' + (s.n ? fmt(s.avg, 2) : "-") + "</span>";
+    }).join("") + "</div>";
+  var last = mine.slice(-5).reverse();
+  if (last.length) {
+    var name = { tp1: "TP1 laga", tp2: "TP2 laga", sl: "SL laga", exit: "EXIT", expired: "waqt khatam" };
+    html += "<h3>Pichle signals</h3>" + last.map(function (t) {
+      return '<div class="row"><span>' + STS.pktTime(t.sent, true) + " · " + t.tf + " " + t.side + '</span><b class="' + (t.r > 0 ? "grn" : "red") + '">' +
+        (name[t.status] || t.status) + " · " + (t.r > 0 ? "+" : "") + fmt(t.r, 2) + "R</b></div>";
+    }).join("");
+  }
+  var op = openTrades().filter(function (t) { return t.sym === UI.tab; });
+  if (op.length) html += '<span class="small">Abhi khule: ' + op.map(function (t) { return t.tf + " " + t.side + " @ " + fmt(t.entry, SYMS[t.sym].dp); }).join(", ") + "</span>";
+  $("record").innerHTML = html;
+}
+
+/* ---------------- notifications ---------------- */
+var VAPID_PUBLIC = "BC7qbMjPryrFnzdvaegWkTUZ0i9HJeF8sZG5gut2vJz0YF8jV5uw-NAPRJSZSqFsQmMrGNQHrAwITgzsonbjLPk";
+var SUB = null;
+function prefsObj() { return { s: STS.ORDER.filter(function (s) { return UI.nsym.indexOf(s) >= 0; }), t: TFS.filter(function (t) { return UI.ntf.indexOf(t) >= 0; }) }; }
+function renderNotif() {
+  $("nsym").innerHTML = STS.ORDER.map(function (s) {
+    var on = UI.nsym.indexOf(s) >= 0, lab = SYMS[s].label + (SYMS[s].spot ? " · Spot" : " · MT5");
+    return '<div class="ntrow"><span>' + lab + '</span><button class="ntb" type="button" data-ns="' + s + '" aria-pressed="' + on + '" aria-label="Notifications ' + lab + '">' + (on ? "ON" : "OFF") + "</button></div>";
+  }).join("");
+  $("ntf").innerHTML = TFS.map(function (tf) {
+    var on = UI.ntf.indexOf(tf) >= 0;
+    return '<button type="button" data-nt="' + tf + '" aria-pressed="' + on + '" aria-label="Notification ' + tf + '">' + tf + "</button>";
+  }).join("");
+  if (SUB) {
+    $("pushCode").value = JSON.stringify(Object.assign(JSON.parse(JSON.stringify(SUB)), { prefs: prefsObj() }));
+    var copied = lsGet("ax_code_prefs", "");
+    $("prefsWarn").classList.toggle("hidden", !copied || copied === JSON.stringify(prefsObj()));
   }
 }
-$("pushBtn").addEventListener("click", enablePush);
-$("pushCopy").addEventListener("click", async () => {
-  const t = $("pushCode");
-  try { await navigator.clipboard.writeText(t.value); }
-  catch (e) { t.select(); document.execCommand("copy"); }
-  $("pushCopy").textContent = "Copied ✓";
-  setTimeout(() => { $("pushCopy").textContent = "Copy code"; }, 2000);
+function b64ToBytes(b64) {
+  var pad = "=".repeat((4 - b64.length % 4) % 4), raw = atob((b64 + pad).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
+}
+function showCode(open) {
+  $("pushShow").classList.remove("hidden");
+  $("pushCodeBox").classList.toggle("hidden", !open);
+  $("pushShow").textContent = open ? "Code chhupayen" : "PUSH_SUB code dikhayen";
+}
+function enablePush() {
+  var st = $("pushState");
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) { st.textContent = "Is browser mein notifications nahi chaltin. Chrome mein kholein."; return; }
+  Notification.requestPermission().then(function (perm) {
+    if (perm !== "granted") { st.textContent = "Notifications block hain. Chrome: link ke saath wala icon > Permissions > Notifications > Allow."; return; }
+    return navigator.serviceWorker.register("sw.js").then(function () { return navigator.serviceWorker.ready; }).then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (sub) {
+        return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
+      }).then(function (sub) {
+        SUB = sub;
+        var isNew = sub.endpoint !== lsGet("gs_sub_ep", "");
+        renderNotif();
+        $("pushBtn").textContent = "Notifications ON hain (test dobara)";
+        showCode(isNew);
+        st.textContent = isNew ? "Naya code bana hai: copy karke GitHub mein PUSH_SUB update karein." : "ON hain ✓";
+        return reg.showNotification("AURX AI ✅", { body: isNew ? "Notifications ON. Code copy karke GitHub mein PUSH_SUB mein dalen." : "Notifications theek kaam kar rahi hain.",
+          icon: "icon-192.png", badge: "badge-96.png", tag: "aurx-local" });
+      });
+    });
+  }).catch(function (e) { st.textContent = "Error: " + (e && e.message ? e.message : e); });
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest("button");
+  if (!b) return;
+  if (b.dataset.tab) { UI.tab = b.dataset.tab; lsSet("ax_tab", UI.tab); render(); }
+  else if (b.dataset.tf) { UI.tf = b.dataset.tf; lsSet("ax_tf", UI.tf); render(); }
+  else if (b.id === "dcaBtn") { UI.dca = !UI.dca; lsSet("ax_dca", UI.dca ? "1" : "0"); render(); }
+  else if (b.dataset.ns) {
+    var i = UI.nsym.indexOf(b.dataset.ns); if (i >= 0) UI.nsym.splice(i, 1); else UI.nsym.push(b.dataset.ns);
+    lsSet("ax_nsym", JSON.stringify(UI.nsym)); renderNotif();
+  } else if (b.dataset.nt) {
+    var j = UI.ntf.indexOf(b.dataset.nt); if (j >= 0) UI.ntf.splice(j, 1); else UI.ntf.push(b.dataset.nt);
+    lsSet("ax_ntf", JSON.stringify(UI.ntf)); renderNotif();
+  } else if (b.id === "refresh") load();
+  else if (b.id === "pushBtn") enablePush();
+  else if (b.id === "pushShow") showCode($("pushCodeBox").classList.contains("hidden"));
+  else if (b.id === "pushCopy") {
+    var t = $("pushCode");
+    (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).catch(function () { t.select(); document.execCommand("copy"); });
+    try { lsSet("gs_sub_ep", JSON.parse(t.value).endpoint || ""); } catch (e) {}
+    lsSet("ax_code_prefs", JSON.stringify(prefsObj()));
+    $("prefsWarn").classList.add("hidden");
+    b.textContent = "Copied ✓"; setTimeout(function () { b.textContent = "Copy code"; }, 2000);
+  }
 });
-(async () => {
+document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+setInterval(function () { if (!document.hidden) load(); }, 60000);
+if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+(function () {
   try {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    if (Notification.permission !== "granted") return;
-    const reg = await navigator.serviceWorker.getRegistration();
-    const sub = reg && await reg.pushManager.getSubscription();
-    if (sub) { showPushCode(sub); $("pushState").textContent = "ON hain."; }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || Notification.permission !== "granted") return;
+    navigator.serviceWorker.getRegistration().then(function (reg) { return reg && reg.pushManager.getSubscription(); }).then(function (sub) {
+      if (!sub) return;
+      SUB = sub;
+      if (!lsGet("gs_sub_ep", "")) lsSet("gs_sub_ep", sub.endpoint);
+      if (!lsGet("ax_code_prefs", "")) lsSet("ax_code_prefs", JSON.stringify({ s: STS.ORDER.slice(), t: ["M15", "H1", "H4", "D1"] }));
+      $("pushBtn").textContent = "Notifications ON hain (test dobara)";
+      $("pushState").textContent = "ON hain ✓";
+      showCode(false);
+      renderNotif();
+    }).catch(function () {});
   } catch (e) {}
 })();
+load();
 </script>
 </body>
 </html>

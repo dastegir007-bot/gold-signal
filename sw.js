@@ -1,5 +1,5 @@
-// Gold Signal service worker: app shell offline, live data always from network, push notifications.
-const CACHE = "gold-signal-v2";
+// AURX AI service worker: app shell offline, live data always from network, push notifications.
+const CACHE = "aurx-ai-v3";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./badge-96.png"];
 
 self.addEventListener("install", e => {
@@ -35,11 +35,11 @@ self.addEventListener("push", e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; }
   catch (_) { d = { body: e.data ? e.data.text() : "" }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Gold Signal", {
+  e.waitUntil(self.registration.showNotification(d.title || "AURX AI", {
     body: d.body || "",
     icon: "icon-192.png",
     badge: "badge-96.png",
-    tag: d.tag || "gold-signal",
+    tag: d.tag || "aurx-ai",
     renotify: true,
     vibrate: [200, 100, 200, 100, 400],
     data: { url: d.url || "./" }

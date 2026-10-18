@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Gold Signal",
-  "short_name": "Gold Signal",
-  "description": "XAUUSD buy / sell / wait signal from MT5 live data",
+  "name": "AURX AI",
+  "short_name": "AURX AI",
+  "description": "Gold, PAXG, BTC, ETH, SOL aur BNB ke buy / sell / wait signals",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
