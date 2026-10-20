@@ -3,6 +3,7 @@
 // Uses the SAME rules as the app (LOGIC block read from index.html).
 //  - new BUY / SELL / EXIT signals for every symbol and timeframe
 //  - follows each signal: DCA fills, TP1, SL (or time out) -> record in sts/state.json
+//  - zone alert: "tayyar rahein" when a signal only needs the running candle to close (before the signal)
 //  - sends phone notifications filtered by the user's settings (prefs inside PUSH_SUB)
 
 const fs = require("fs");
@@ -156,6 +157,32 @@ function newSignals(state, ctx, res, msgs) {
   return changed;
 }
 
+// zone alert ("setup tayyar"): every rule for a signal is met except the close of the running candle,
+// so the user can get ready. The same coin + timeframe + side alerts again only after a pause.
+const ZONE_GAP_H = { M15: 1, H1: 4, H4: 12, D1: 48, W1: 168 };
+function zoneAlerts(state, ctx, res, msgs) {
+  let changed = false;
+  for (const sym of STS.ORDER) {
+    for (const tf of STS.TFS) {
+      const r = res[sym][tf];
+      if (!r || r.noData || r.side !== "WAIT" || STS.planBlocked(r)) continue;
+      if (state.trades.some(t => t.status === "open" && t.sym === sym && t.tf === tf)) continue;
+      const z = STS.setupReady(ctx, sym, tf, r);
+      if (!z) continue;
+      const key = ["zone", sym, tf, z.dir].join("|");
+      if (state.sent[key] && NOW - state.sent[key] < (ZONE_GAP_H[tf] || 4) * 3600e3) continue;
+      state.sent[key] = NOW; changed = true;
+      const buy = z.dir === "BUY";
+      msgs.push({ sym, tf, kind: "zone",
+        title: "⏳ Tayyar rahein · " + label(sym) + " " + tf + " " + z.dir + " ~" + px(sym, ctx.price[sym]),
+        body: "Agar " + tf + " candle (" + STS.pktTime(z.closeAt) + " PKT par band) EMA20 " + px(sym, z.ema20) + " ke " +
+          (buy ? "upar hari" : "neeche laal") + " band hui to " + z.dir + " signal aayega. Abhi trade nahi.\n" +
+          "Andaza: SL ~" + px(sym, z.sl) + " · TP1 ~" + px(sym, z.tp1) });
+    }
+  }
+  return changed;
+}
+
 function readSubs(raw) {
   const t = String(raw || "").trim();
   if (!t) return [];
@@ -179,7 +206,7 @@ async function send(msgs) {
   for (const sub of readSubs(process.env.PUSH_SUB)) {
     subs++;
     const prefs = sub.prefs || DEFAULT_PREFS;
-    let list = msgs.filter(m => prefs.s.indexOf(m.sym) >= 0 && prefs.t.indexOf(m.tf) >= 0);
+    let list = msgs.filter(m => prefs.s.indexOf(m.sym) >= 0 && prefs.t.indexOf(m.tf) >= 0 && (m.kind !== "zone" || prefs.z !== 0));
     if (isTest) list = [{ sym: "test", tf: "", title: "AURX AI: test ✅", body: "Notifications kaam kar rahi hain.\nSymbols: " + prefs.s.join(", ") + " · TF: " + prefs.t.join(", ") }].concat(list);
     if (list.length > 6) {
       const rest = list.slice(5);
@@ -224,6 +251,7 @@ async function send(msgs) {
   const before = JSON.stringify(state.trades);
   track(state, ctx, msgs);
   const sigChanged = newSignals(state, ctx, res, msgs);
+  const zoneChanged = zoneAlerts(state, ctx, res, msgs);
   const tradesChanged = JSON.stringify(state.trades) !== before;
 
   for (const s of STS.ORDER) for (const tf of STS.TFS) {
@@ -232,14 +260,14 @@ async function send(msgs) {
   }
 
   // keep the file small
-  for (const k of Object.keys(state.sent)) if (NOW - state.sent[k] > 90 * 864e5) delete state.sent[k];
+  for (const k of Object.keys(state.sent)) if (NOW - state.sent[k] > (k.indexOf("zone|") === 0 ? 8 : 90) * 864e5) delete state.sent[k];
   const open = state.trades.filter(t => t.status === "open"), done = state.trades.filter(t => t.status !== "open");
   state.trades = done.slice(-400).concat(open);
 
   const pushRes = await send(msgs);
 
   const snapOld = !state.snap || NOW - state.snap.at >= SNAP_EVERY;
-  const dirty = sigChanged || tradesChanged || eventsChanged || msgs.length > 0 || process.env.FORCE_TEST === "1";
+  const dirty = sigChanged || zoneChanged || tradesChanged || eventsChanged || msgs.length > 0 || process.env.FORCE_TEST === "1";
   if (dirty || snapOld) {
     const rows = {};
     STS.ORDER.forEach(s => { rows[s] = STS.tfRows(ctx, s); });
