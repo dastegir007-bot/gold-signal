@@ -805,13 +805,66 @@ function fetchText(url) {
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
 }
 
+// ---- Binance candles, light on the phone ----
+// First load (or after a long pause) gets the full history; after that each refresh only asks for the
+// last 3 candles of every timeframe and patches them in (a few KB instead of ~1.3 MB a minute).
+var KC = {}, HOST = null;
+function getKlines(bin, iv, limit) {
+  var hosts = HOST ? [HOST].concat(STS.CFG.hosts.filter(function (h) { return h !== HOST; })) : STS.CFG.hosts.slice();
+  var i = 0, last = null;
+  function next() {
+    if (i >= hosts.length) return Promise.reject(last || new Error("Binance nahi mila"));
+    var h = hosts[i++];
+    return tfetch(h + "/api/v3/klines?symbol=" + bin + "&interval=" + iv + "&limit=" + limit, { cache: "no-store" }, 10000)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { if (!Array.isArray(j) || !j.length) throw new Error("khali data"); HOST = h; return j; })
+      .catch(function (e) { last = e; return next(); });
+  }
+  return next();
+}
+function loadSpotLite(now) {
+  var out = { bars: {}, host: null, errors: [] };
+  function one(s, tf) {
+    var bin = SYMS[s].bin, iv = TFINFO[tf].bin, key = bin + "|" + iv, have = KC[key], ms = TFINFO[tf].ms;
+    var full = !have || now - have[have.length - 1][0] > 2 * ms;
+    return getKlines(bin, iv, full ? STS.CFG.klineLimit : 3).then(function (k) {
+      if (full) KC[key] = k;
+      else {
+        var arr = KC[key];
+        k.forEach(function (row) {
+          var j = arr.length - 1;
+          while (j >= 0 && arr[j][0] > row[0]) j--;
+          if (j >= 0 && arr[j][0] === row[0]) arr[j] = row; else arr.splice(j + 1, 0, row);
+        });
+        if (arr.length > STS.CFG.klineLimit) arr.splice(0, arr.length - STS.CFG.klineLimit);
+      }
+      out.bars[s][tf] = STS.klinesToBars(KC[key], now);
+    }).catch(function (e) {
+      var c = KC[key];   // a missed patch: keep using what we have if it is still recent
+      if (c && now - c[c.length - 1][0] <= 2 * ms) out.bars[s][tf] = STS.klinesToBars(c, now);
+      else out.errors.push(s + " " + tf + ": " + (e && e.message || e));
+    });
+  }
+  STS.SPOT.forEach(function (s) { out.bars[s] = {}; });
+  // without a known working host, find one with a single request first
+  var first = HOST ? Promise.resolve() : one("btc", "H1");
+  return first.then(function () {
+    if (!HOST) { out.errors = ["Binance: " + (out.errors[0] ? out.errors[0].replace(/^btc H1: /, "") : "nahi mila")]; return out; }
+    var jobs = [];
+    STS.SPOT.forEach(function (s) { TFS.forEach(function (tf) { if (!(s === "btc" && tf === "H1" && out.bars.btc.H1)) jobs.push(one(s, tf)); }); });
+    return Promise.all(jobs).then(function () { out.host = HOST; return out; });
+  });
+}
+
 function load() {
   if (D.busy) return;
   D.busy = true;
   var now = Date.now(), errors = [], spotDone = false;
   var pGold = fetchText(STS.CFG.goldUrl).catch(function (e) { errors.push("Gold data: " + e.message); return null; });
-  var pState = fetchText(STS.CFG.stateUrl).then(function (t) { return JSON.parse(t); }).catch(function () { return null; });
-  var pSpot = STS.loadSpot(function (u, o) { return tfetch(u, o, 10000); }, now);
+  // server record changes slowly: fetch it at most every 5 minutes
+  var pState = D.state && D.stateAt && now - D.stateAt < 5 * 60000 ? Promise.resolve(D.state) :
+    fetchText(STS.CFG.stateUrl).then(function (t) { D.stateAt = now; return JSON.parse(t); }).catch(function () { return D.state || null; });
+  var pSpot = loadSpotLite(now);
   // first open: show gold + last server data at once, live crypto replaces it when Binance answers
   Promise.all([pGold, pState]).then(function (r) {
     if (spotDone || D.ctx) return;
